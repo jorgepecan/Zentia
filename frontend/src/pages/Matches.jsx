@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from "../components/ui/dialog";
 import { toast } from "sonner";
-import { PlusIcon, VolleyballIcon, ChartBarIcon } from "@phosphor-icons/react";
+import { Plus, Volleyball, ChartBar } from "@phosphor-icons/react";
 
 export default function Matches() {
   const { activeTeam } = useTeam() || {};
@@ -51,7 +51,7 @@ export default function Matches() {
         {isCoach && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="new-match-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><PlusIcon size={18} weight="bold" /> Nuevo partido</Button>
+              <Button data-testid="new-match-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><Plus size={18} weight="bold" /> Nuevo partido</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Crear partido</DialogTitle></DialogHeader>
@@ -74,7 +74,7 @@ export default function Matches() {
 
       {matches.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <VolleyballIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <Volleyball size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">Sin partidos. Crea el primero para empezar.</p>
         </Card>
       ) : (
@@ -90,7 +90,7 @@ export default function Matches() {
                 </div>
               </div>
               <Link to={`/matches/${m.match_id}`}>
-                <Button data-testid={`open-datavolley-${m.match_id}`} variant="outline" className="gap-2"><ChartBarIcon size={16} /> Datavolley</Button>
+                <Button data-testid={`open-datavolley-${m.match_id}`} variant="outline" className="gap-2"><ChartBar size={16} /> Datavolley</Button>
               </Link>
             </Card>
           ))}

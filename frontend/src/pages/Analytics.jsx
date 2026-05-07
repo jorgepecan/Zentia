@@ -6,7 +6,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "../components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from "recharts";
-import { ChartLineUpIcon } from "@phosphor-icons/react";
+import { ChartLineUp } from "@phosphor-icons/react";
 
 export default function Analytics() {
   const { activeTeam } = useTeam() || {};
@@ -73,7 +73,7 @@ export default function Analytics() {
 
       {matches.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <ChartLineUpIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <ChartLineUp size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">Crea partidos y registra datos para ver analíticas.</p>
         </Card>
       ) : barData.length === 0 ? (

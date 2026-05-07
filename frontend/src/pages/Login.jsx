@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
 import { toast } from "sonner";
-import { VolleyballIcon, GoogleLogoIcon, EnvelopeIcon, LockKeyIcon, ArrowRightIcon } from "@phosphor-icons/react";
+import { Volleyball, GoogleLogo, Envelope, LockKey, ArrowRight } from "@phosphor-icons/react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -45,7 +45,7 @@ export default function Login() {
         }} />
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-orange-500 flex items-center justify-center">
-            <VolleyballIcon size={26} weight="duotone" />
+            <Volleyball size={26} weight="duotone" />
           </div>
           <div className="font-heading text-2xl font-bold">Zentia<span className="text-orange-400">VolleyPro</span></div>
         </div>
@@ -72,7 +72,7 @@ export default function Login() {
         <Card className="w-full max-w-md p-8 zentia-card shadow-none">
           <div className="lg:hidden flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center">
-              <VolleyballIcon size={22} weight="duotone" />
+              <Volleyball size={22} weight="duotone" />
             </div>
             <div className="font-heading text-xl font-bold">Zentia VolleyPro</div>
           </div>
@@ -86,7 +86,7 @@ export default function Login() {
             variant="outline"
             className="w-full h-11 gap-2 border-slate-300 hover:bg-slate-100 font-medium"
           >
-            <GoogleLogoIcon size={20} weight="bold" /> Continuar con Google
+            <GoogleLogo size={20} weight="bold" /> Continuar con Google
           </Button>
 
           <div className="flex items-center gap-3 my-6">
@@ -99,7 +99,7 @@ export default function Login() {
             <div>
               <Label htmlFor="email" className="text-xs uppercase tracking-widest font-bold text-slate-600">Email</Label>
               <div className="relative mt-1">
-                <EnvelopeIcon size={18} className="absolute left-3 top-3 text-slate-400" />
+                <Envelope size={18} className="absolute left-3 top-3 text-slate-400" />
                 <Input
                   id="email"
                   data-testid="login-email-input"
@@ -115,7 +115,7 @@ export default function Login() {
             <div>
               <Label htmlFor="password" className="text-xs uppercase tracking-widest font-bold text-slate-600">Contraseña</Label>
               <div className="relative mt-1">
-                <LockKeyIcon size={18} className="absolute left-3 top-3 text-slate-400" />
+                <LockKey size={18} className="absolute left-3 top-3 text-slate-400" />
                 <Input
                   id="password"
                   data-testid="login-password-input"
@@ -134,7 +134,7 @@ export default function Login() {
               disabled={busy}
               className="w-full h-11 bg-orange-600 hover:bg-orange-700 text-white font-semibold gap-2"
             >
-              {busy ? "Entrando..." : <>Entrar <ArrowRightIcon size={18} weight="bold" /></>}
+              {busy ? "Entrando..." : <>Entrar <ArrowRight size={18} weight="bold" /></>}
             </Button>
           </form>
 

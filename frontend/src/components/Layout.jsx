@@ -5,9 +5,9 @@ import { api } from "../lib/api";
 import { Button } from "../components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
-  HouseIcon, UsersThreeIcon, ChartBarIcon, CalendarBlankIcon, MegaphoneIcon,
-  StrategyIcon, ImagesSquareIcon, SignOutIcon, VolleyballIcon, GearSixIcon,
-  TrophyIcon, ClipboardTextIcon, ChatsCircleIcon
+  House, UsersThree, ChartBar, CalendarBlank, Megaphone,
+  Strategy, ImagesSquare, SignOut, Volleyball, GearSix,
+  Trophy, ClipboardText, ChatsCircle
 } from "@phosphor-icons/react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -17,17 +17,17 @@ export const TeamCtx = createContext(null);
 export const useTeam = () => useContext(TeamCtx);
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: HouseIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/roster", label: "Plantilla", icon: UsersThreeIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/lineup", label: "Alineaciones", icon: StrategyIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/schedule", label: "Horarios", icon: CalendarBlankIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/matches", label: "Partidos & Datavolley", icon: VolleyballIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/results", label: "Resultados", icon: TrophyIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/attendance", label: "Asistencia", icon: ClipboardTextIcon, roles: ["head_coach", "assistant_coach"] },
-  { to: "/communications", label: "Comunicación", icon: ChatsCircleIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/announcements", label: "Anuncios", icon: MegaphoneIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/gallery", label: "Galería", icon: ImagesSquareIcon, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/analytics", label: "Analítica", icon: ChartBarIcon, roles: ["head_coach", "assistant_coach"] },
+  { to: "/dashboard", label: "Dashboard", icon: House, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/roster", label: "Plantilla", icon: UsersThree, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/lineup", label: "Alineaciones", icon: Strategy, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/schedule", label: "Horarios", icon: CalendarBlank, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/matches", label: "Partidos & Datavolley", icon: Volleyball, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/results", label: "Resultados", icon: Trophy, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/attendance", label: "Asistencia", icon: ClipboardText, roles: ["head_coach", "assistant_coach"] },
+  { to: "/communications", label: "Comunicación", icon: ChatsCircle, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/announcements", label: "Anuncios", icon: Megaphone, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/gallery", label: "Galería", icon: ImagesSquare, roles: ["head_coach", "assistant_coach", "player"] },
+  { to: "/analytics", label: "Analítica", icon: ChartBar, roles: ["head_coach", "assistant_coach"] },
 ];
 
 export default function Layout() {
@@ -60,7 +60,7 @@ export default function Layout() {
           <div className="p-5 border-b border-slate-200">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center">
-                <VolleyballIcon size={22} weight="duotone" />
+                <Volleyball size={22} weight="duotone" />
               </div>
               <div>
                 <div className="font-heading font-bold text-base leading-tight">Zentia</div>
@@ -124,7 +124,7 @@ export default function Layout() {
                 <div className="text-xs text-slate-500 truncate capitalize">{(user?.role || "").replace("_", " ")}</div>
               </div>
               <button onClick={onLogout} data-testid="logout-btn" className="text-slate-400 hover:text-red-600 transition-colors">
-                <SignOutIcon size={18} />
+                <SignOut size={18} />
               </button>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function Layout() {
             </div>
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} data-testid="settings-btn">
-                <GearSixIcon size={20} />
+                <GearSix size={20} />
               </Button>
             </div>
           </header>

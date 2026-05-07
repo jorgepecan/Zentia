@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeftIcon, FloppyDiskIcon, TrashIcon } from "@phosphor-icons/react";
+import { ArrowLeft, FloppyDisk, Trash } from "@phosphor-icons/react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "../components/ui/select";
@@ -112,7 +112,7 @@ export default function MatchDetail() {
     <div className="max-w-7xl space-y-5">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <Link to="/matches"><Button variant="ghost" size="icon"><ArrowLeftIcon size={20} /></Button></Link>
+          <Link to="/matches"><Button variant="ghost" size="icon"><ArrowLeft size={20} /></Button></Link>
           <div>
             <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Datavolley • Set {setNum}</div>
             <h2 className="font-heading text-2xl font-bold tracking-tight">{match.opponent}</h2>
@@ -134,7 +134,7 @@ export default function MatchDetail() {
         <Input type="number" className="w-20 h-10 text-center font-heading font-bold text-lg" value={scoreEdit.home} onChange={e => setScoreEdit({...scoreEdit, home: e.target.value})} data-testid="home-score-input" />
         <span className="text-slate-400 font-bold">vs</span>
         <Input type="number" className="w-20 h-10 text-center font-heading font-bold text-lg" value={scoreEdit.away} onChange={e => setScoreEdit({...scoreEdit, away: e.target.value})} data-testid="away-score-input" />
-        <Button onClick={saveScore} data-testid="save-score-btn" size="sm" className="bg-orange-600 hover:bg-orange-700 gap-2"><FloppyDiskIcon size={16} /> Guardar</Button>
+        <Button onClick={saveScore} data-testid="save-score-btn" size="sm" className="bg-orange-600 hover:bg-orange-700 gap-2"><FloppyDisk size={16} /> Guardar</Button>
       </Card>
 
       <div className="grid lg:grid-cols-12 gap-5">
@@ -172,7 +172,7 @@ export default function MatchDetail() {
                   ))}
                 </div>
                 <div className="flex justify-end mt-3">
-                  <Button variant="outline" onClick={undo} data-testid="undo-btn" className="gap-2"><TrashIcon size={16} /> Deshacer última</Button>
+                  <Button variant="outline" onClick={undo} data-testid="undo-btn" className="gap-2"><Trash size={16} /> Deshacer última</Button>
                 </div>
               </TabsContent>
               <TabsContent value="advanced">
@@ -227,7 +227,7 @@ export default function MatchDetail() {
               {stats.slice(-15).reverse().map(s => (
                 <div key={s.stat_id} className="flex items-center justify-between text-sm py-1 border-b border-slate-50">
                   <span>Set {s.set_number} • <strong>#{playerNum(s.player_id)}</strong> {s.action} → <em>{s.quality}</em>{s.code ? <code className="ml-2 text-xs bg-slate-100 px-1 rounded">{s.code}</code> : ""}</span>
-                  <button onClick={async () => { await api.delete(`/stats/${s.stat_id}`); load(); }} className="text-slate-400 hover:text-red-600"><TrashIcon size={14} /></button>
+                  <button onClick={async () => { await api.delete(`/stats/${s.stat_id}`); load(); }} className="text-slate-400 hover:text-red-600"><Trash size={14} /></button>
                 </div>
               ))}
               {stats.length === 0 && <p className="text-slate-500 text-sm py-2">Sin registros.</p>}

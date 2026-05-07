@@ -199,12 +199,13 @@ async def register(payload: RegisterIn, response: Response):
     email = payload.email.lower().strip()
     if await db.users.find_one({"email": email}):
         raise HTTPException(400, "Email already registered")
+    role = payload.role if payload.role in ("head_coach", "assistant_coach", "player") else "player"
     user_id = gen_id("user")
     doc = {
         "user_id": user_id,
         "email": email,
         "name": payload.name,
-        "role": payload.role,
+        "role": role,
         "password_hash": hash_password(payload.password),
         "auth_provider": "local",
         "picture": None,
@@ -319,6 +320,9 @@ async def get_team(team_id: str, user=Depends(current_user)):
     t = await db.teams.find_one({"team_id": team_id}, {"_id": 0})
     if not t:
         raise HTTPException(404, "Team not found")
+    member_ids = [m["user_id"] for m in t.get("members", [])]
+    if user["user_id"] != t.get("owner_id") and user["user_id"] not in member_ids:
+        raise HTTPException(403, "Not a member of this team")
     return t
 
 

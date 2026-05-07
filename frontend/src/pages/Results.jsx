@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useTeam } from "../components/Layout";
 import { Card } from "../components/ui/card";
-import { TrophyIcon } from "@phosphor-icons/react";
+import { Trophy } from "@phosphor-icons/react";
 
 export default function Results() {
   const { activeTeam } = useTeam() || {};
@@ -45,7 +45,7 @@ export default function Results() {
 
       {matches.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <TrophyIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <Trophy size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">Aún no hay resultados.</p>
         </Card>
       ) : (

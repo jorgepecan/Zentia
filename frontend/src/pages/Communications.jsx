@@ -7,7 +7,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { toast } from "sonner";
-import { PaperPlaneTiltIcon, ChatsCircleIcon } from "@phosphor-icons/react";
+import { PaperPlaneTilt, ChatsCircle } from "@phosphor-icons/react";
 
 export default function Communications() {
   const { activeTeam } = useTeam() || {};
@@ -47,7 +47,7 @@ export default function Communications() {
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-slate-400">
-              <ChatsCircleIcon size={48} weight="duotone" />
+              <ChatsCircle size={48} weight="duotone" />
               <p className="text-sm mt-2">Sé el primero en escribir.</p>
             </div>
           )}
@@ -73,7 +73,7 @@ export default function Communications() {
         </div>
         <form onSubmit={send} className="p-3 border-t border-slate-200 flex gap-2">
           <Input data-testid="message-input" placeholder="Escribe un mensaje..." value={text} onChange={e => setText(e.target.value)} className="h-11" />
-          <Button data-testid="send-message-btn" type="submit" className="bg-orange-600 hover:bg-orange-700 h-11 w-11 p-0"><PaperPlaneTiltIcon size={18} weight="fill" /></Button>
+          <Button data-testid="send-message-btn" type="submit" className="bg-orange-600 hover:bg-orange-700 h-11 w-11 p-0"><PaperPlaneTilt size={18} weight="fill" /></Button>
         </form>
       </Card>
     </div>

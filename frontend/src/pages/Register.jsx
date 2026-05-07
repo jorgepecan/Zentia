@@ -7,12 +7,12 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
 import { toast } from "sonner";
-import { VolleyballIcon, UserIcon, EnvelopeIcon, LockKeyIcon, MegaphoneIcon as WhistleIcon } from "@phosphor-icons/react";
+import { Volleyball, User, Envelope, LockKey, Megaphone as Whistle } from "@phosphor-icons/react";
 
 const ROLES = [
-  { v: "head_coach", l: "Entrenador principal", icon: WhistleIcon },
-  { v: "assistant_coach", l: "Entrenador asistente", icon: UserIcon },
-  { v: "player", l: "Jugador/a", icon: VolleyballIcon },
+  { v: "head_coach", l: "Entrenador principal", icon: Whistle },
+  { v: "assistant_coach", l: "Entrenador asistente", icon: User },
+  { v: "player", l: "Jugador/a", icon: Volleyball },
 ];
 
 export default function Register() {
@@ -40,7 +40,7 @@ export default function Register() {
       <Card className="w-full max-w-lg p-8 zentia-card shadow-none">
         <div className="flex items-center gap-3 mb-2">
           <div className="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center">
-            <VolleyballIcon size={22} weight="duotone" />
+            <Volleyball size={22} weight="duotone" />
           </div>
           <div className="font-heading text-xl font-bold">Zentia VolleyPro</div>
         </div>

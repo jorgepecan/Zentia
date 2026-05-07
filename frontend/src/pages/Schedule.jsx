@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from "../components/ui/dialog";
 import { toast } from "sonner";
-import { PlusIcon, CalendarBlankIcon, MapPinIcon } from "@phosphor-icons/react";
+import { Plus, CalendarBlank, MapPin } from "@phosphor-icons/react";
 
 export default function Schedule() {
   const { activeTeam } = useTeam() || {};
@@ -60,7 +60,7 @@ export default function Schedule() {
         {isCoach && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="new-training-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><PlusIcon size={18} weight="bold" /> Entrenamiento</Button>
+              <Button data-testid="new-training-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><Plus size={18} weight="bold" /> Entrenamiento</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Nuevo entrenamiento</DialogTitle></DialogHeader>
@@ -78,7 +78,7 @@ export default function Schedule() {
 
       {events.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <CalendarBlankIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <CalendarBlank size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">No hay eventos programados.</p>
         </Card>
       ) : (
@@ -92,7 +92,7 @@ export default function Schedule() {
               <div className="flex-1">
                 <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{ev.kind === "match" ? "Partido" : "Entrenamiento"}</div>
                 <div className="font-heading font-bold text-lg">{ev.title}</div>
-                <div className="text-xs text-slate-500 flex items-center gap-1"><MapPinIcon size={14} /> {ev.location || "Por confirmar"} • {new Date(ev.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</div>
+                <div className="text-xs text-slate-500 flex items-center gap-1"><MapPin size={14} /> {ev.location || "Por confirmar"} • {new Date(ev.date).toLocaleString("es-ES", { weekday: "short", hour: "2-digit", minute: "2-digit" })}</div>
               </div>
             </Card>
           ))}

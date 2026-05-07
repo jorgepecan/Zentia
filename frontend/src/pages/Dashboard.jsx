@@ -5,8 +5,8 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Link } from "react-router-dom";
 import {
-  VolleyballIcon, TrophyIcon, UsersThreeIcon, CalendarBlankIcon,
-  ChartLineUpIcon, FireIcon, ArrowRightIcon, MegaphoneIcon
+  Volleyball, Trophy, UsersThree, CalendarBlank,
+  ChartLineUp, Fire, ArrowRight, Megaphone
 } from "@phosphor-icons/react";
 
 const Stat = ({ label, value, icon: Icon, accent = "orange" }) => (
@@ -52,7 +52,7 @@ export default function Dashboard() {
   if (!activeTeam) {
     return (
       <Card className="zentia-card p-12 text-center max-w-2xl mx-auto shadow-none">
-        <VolleyballIcon size={56} weight="duotone" className="mx-auto text-orange-500 mb-4" />
+        <Volleyball size={56} weight="duotone" className="mx-auto text-orange-500 mb-4" />
         <h2 className="font-heading text-3xl font-bold tracking-tight">¡Bienvenido a Zentia VolleyPro!</h2>
         <p className="text-slate-500 mt-2 mb-6">Crea tu primer equipo para empezar a gestionar la temporada.</p>
         <Link to="/teams/new"><Button className="bg-orange-600 hover:bg-orange-700">Crear equipo</Button></Link>
@@ -75,7 +75,7 @@ export default function Dashboard() {
               Tu cabina de mando. Plantilla, alineaciones, datavolley, comunicación y analítica — sincronizado para todo el cuerpo técnico.
             </p>
             <div className="flex gap-3 mt-5">
-              <Link to="/matches"><Button className="bg-orange-600 hover:bg-orange-700 gap-2">Iniciar Datavolley <ArrowRightIcon size={16} weight="bold" /></Button></Link>
+              <Link to="/matches"><Button className="bg-orange-600 hover:bg-orange-700 gap-2">Iniciar Datavolley <ArrowRight size={16} weight="bold" /></Button></Link>
               <Link to="/lineup"><Button variant="outline">Diseñar alineación</Button></Link>
             </div>
           </div>
@@ -95,10 +95,10 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="Jugadores" value={counts.players} icon={UsersThreeIcon} />
-        <Stat label="Próximos partidos" value={counts.scheduled} icon={CalendarBlankIcon} accent="blue" />
-        <Stat label="Partidos jugados" value={counts.matches} icon={VolleyballIcon} />
-        <Stat label="Victorias" value={counts.won} icon={TrophyIcon} accent="blue" />
+        <Stat label="Jugadores" value={counts.players} icon={UsersThree} />
+        <Stat label="Próximos partidos" value={counts.scheduled} icon={CalendarBlank} accent="blue" />
+        <Stat label="Partidos jugados" value={counts.matches} icon={Volleyball} />
+        <Stat label="Victorias" value={counts.won} icon={Trophy} accent="blue" />
       </div>
 
       {/* Recent + News */}
@@ -106,7 +106,7 @@ export default function Dashboard() {
         <Card className="zentia-card p-5 lg:col-span-2 shadow-none">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-heading text-lg font-bold tracking-tight flex items-center gap-2">
-              <FireIcon size={20} weight="duotone" className="text-orange-500" /> Partidos recientes
+              <Fire size={20} weight="duotone" className="text-orange-500" /> Partidos recientes
             </h3>
             <Link to="/matches" className="text-sm text-orange-600 font-semibold hover:underline">Ver todos</Link>
           </div>
@@ -132,7 +132,7 @@ export default function Dashboard() {
 
         <Card className="zentia-card p-5 shadow-none">
           <h3 className="font-heading text-lg font-bold tracking-tight flex items-center gap-2 mb-4">
-            <MegaphoneIcon size={20} weight="duotone" className="text-blue-700" /> Anuncios
+            <Megaphone size={20} weight="duotone" className="text-blue-700" /> Anuncios
           </h3>
           {news.length === 0 ? (
             <p className="text-slate-500 text-sm py-6 text-center">Sin novedades.</p>

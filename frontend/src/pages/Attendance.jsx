@@ -5,13 +5,13 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from "sonner";
-import { CheckCircleIcon, XCircleIcon, ClockIcon, ClipboardTextIcon } from "@phosphor-icons/react";
+import { CheckCircle, XCircle, Clock, ClipboardText } from "@phosphor-icons/react";
 
 const STATUSES = [
-  { v: "present", l: "Presente", icon: CheckCircleIcon, color: "text-emerald-600" },
-  { v: "late", l: "Tarde", icon: ClockIcon, color: "text-amber-600" },
-  { v: "excused", l: "Justificado", icon: ClockIcon, color: "text-blue-600" },
-  { v: "absent", l: "Ausente", icon: XCircleIcon, color: "text-red-600" },
+  { v: "present", l: "Presente", icon: CheckCircle, color: "text-emerald-600" },
+  { v: "late", l: "Tarde", icon: Clock, color: "text-amber-600" },
+  { v: "excused", l: "Justificado", icon: Clock, color: "text-blue-600" },
+  { v: "absent", l: "Ausente", icon: XCircle, color: "text-red-600" },
 ];
 
 export default function Attendance() {
@@ -74,7 +74,7 @@ export default function Attendance() {
 
       {trainings.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <ClipboardTextIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <ClipboardText size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">Crea un entrenamiento en Horarios para registrar asistencia.</p>
         </Card>
       ) : (

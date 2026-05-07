@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from "../components/ui/dialog";
 import { toast } from "sonner";
-import { PlusIcon, ImagesSquareIcon, TrashIcon } from "@phosphor-icons/react";
+import { Plus, ImagesSquare, Trash } from "@phosphor-icons/react";
 
 export default function Gallery() {
   const { activeTeam } = useTeam() || {};
@@ -50,7 +50,7 @@ export default function Gallery() {
         {isCoach && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="add-gallery-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><PlusIcon size={18} weight="bold" /> Añadir</Button>
+              <Button data-testid="add-gallery-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><Plus size={18} weight="bold" /> Añadir</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Añadir a galería</DialogTitle></DialogHeader>
@@ -66,7 +66,7 @@ export default function Gallery() {
 
       {items.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <ImagesSquareIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <ImagesSquare size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">La galería está vacía.</p>
         </Card>
       ) : (
@@ -78,7 +78,7 @@ export default function Gallery() {
               {isCoach && (
                 <button onClick={async () => { await api.delete(`/gallery/${it.gallery_id}`); load(); }}
                   className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-md text-red-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <TrashIcon size={14} />
+                  <Trash size={14} />
                 </button>
               )}
             </div>

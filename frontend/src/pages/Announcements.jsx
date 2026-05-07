@@ -11,7 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
 } from "../components/ui/dialog";
 import { toast } from "sonner";
-import { PlusIcon, MegaphoneIcon, PushPinIcon, TrashIcon } from "@phosphor-icons/react";
+import { Plus, Megaphone, PushPin, Trash } from "@phosphor-icons/react";
 
 export default function Announcements() {
   const { activeTeam } = useTeam() || {};
@@ -53,7 +53,7 @@ export default function Announcements() {
         {isCoach && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="new-announcement-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><PlusIcon size={18} weight="bold" /> Nuevo anuncio</Button>
+              <Button data-testid="new-announcement-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><Plus size={18} weight="bold" /> Nuevo anuncio</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Publicar anuncio</DialogTitle></DialogHeader>
@@ -70,7 +70,7 @@ export default function Announcements() {
 
       {items.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <MegaphoneIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <Megaphone size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">Sin anuncios todavía.</p>
         </Card>
       ) : (
@@ -80,13 +80,13 @@ export default function Announcements() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    {a.pinned && <PushPinIcon size={16} weight="fill" className="text-orange-600" />}
+                    {a.pinned && <PushPin size={16} weight="fill" className="text-orange-600" />}
                     <h3 className="font-heading font-bold text-lg">{a.title}</h3>
                   </div>
                   <p className="text-slate-700 mt-1 whitespace-pre-wrap">{a.body}</p>
                   <div className="text-xs text-slate-500 mt-2">{a.author_name} • {new Date(a.created_at).toLocaleString("es-ES")}</div>
                 </div>
-                {isCoach && <button onClick={() => del(a.announcement_id)} className="text-slate-400 hover:text-red-600"><TrashIcon size={16} /></button>}
+                {isCoach && <button onClick={() => del(a.announcement_id)} className="text-slate-400 hover:text-red-600"><Trash size={16} /></button>}
               </div>
             </Card>
           ))}

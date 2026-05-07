@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "../components/ui/select";
 import { toast } from "sonner";
-import { PlusIcon, TrashIcon, UsersThreeIcon, EnvelopePlusIcon } from "@phosphor-icons/react";
+import { Plus, Trash, UsersThree, EnvelopeOpen as EnvelopePlus } from "@phosphor-icons/react";
 import { useAuth } from "../lib/auth";
 
 const POSITIONS = [
@@ -82,7 +82,7 @@ export default function Roster() {
             <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" data-testid="invite-member-btn" className="gap-2">
-                  <EnvelopePlusIcon size={18} weight="bold" /> Invitar al equipo
+                  <EnvelopePlus size={18} weight="bold" /> Invitar al equipo
                 </Button>
               </DialogTrigger>
               <DialogContent>
@@ -109,7 +109,7 @@ export default function Roster() {
             </Dialog>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button data-testid="add-player-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><PlusIcon size={18} weight="bold" /> Añadir jugador</Button>
+                <Button data-testid="add-player-btn" className="bg-orange-600 hover:bg-orange-700 gap-2"><Plus size={18} weight="bold" /> Añadir jugador</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Nuevo jugador</DialogTitle></DialogHeader>
@@ -136,7 +136,7 @@ export default function Roster() {
 
       {players.length === 0 ? (
         <Card className="zentia-card p-12 text-center shadow-none">
-          <UsersThreeIcon size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
+          <UsersThree size={48} weight="duotone" className="mx-auto text-slate-300 mb-3" />
           <p className="text-slate-500">Aún no has añadido jugadores.</p>
         </Card>
       ) : (
@@ -148,7 +148,7 @@ export default function Roster() {
                 <div className="font-semibold truncate">{p.name}</div>
                 <div className="text-xs text-slate-500">{POSITIONS.find(x => x.v === p.position)?.l || p.position}{p.height_cm ? ` • ${p.height_cm}cm` : ""}</div>
               </div>
-              {isCoach && <button onClick={() => del(p.player_id)} className="text-slate-400 hover:text-red-600" data-testid={`delete-player-${p.player_id}`}><TrashIcon size={18} /></button>}
+              {isCoach && <button onClick={() => del(p.player_id)} className="text-slate-400 hover:text-red-600" data-testid={`delete-player-${p.player_id}`}><Trash size={18} /></button>}
             </Card>
           ))}
         </div>

@@ -6,7 +6,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
-import { FloppyDiskIcon, TrashIcon, ArrowsClockwiseIcon } from "@phosphor-icons/react";
+import { FloppyDisk, Trash, ArrowsClockwise } from "@phosphor-icons/react";
 
 // Volleyball court rotation positions (top half = our side)
 // Position numbers from coach's perspective:
@@ -94,9 +94,9 @@ export default function Lineup() {
         <div className="flex gap-2 items-center">
           <Input data-testid="lineup-name-input" className="w-56" value={name} onChange={e => setName(e.target.value)} />
           <Button data-testid="save-lineup-btn" onClick={save} className="bg-orange-600 hover:bg-orange-700 gap-2">
-            <FloppyDiskIcon size={18} weight="bold" /> Guardar
+            <FloppyDisk size={18} weight="bold" /> Guardar
           </Button>
-          <Button variant="outline" onClick={() => setPositions({})} className="gap-2"><ArrowsClockwiseIcon size={16} /> Limpiar</Button>
+          <Button variant="outline" onClick={() => setPositions({})} className="gap-2"><ArrowsClockwise size={16} /> Limpiar</Button>
         </div>
       </div>
 
@@ -164,7 +164,7 @@ export default function Lineup() {
                 {lineups.map(l => (
                   <div key={l.lineup_id} className="flex items-center justify-between p-2 rounded hover:bg-slate-50">
                     <button onClick={() => loadLineup(l)} className="text-sm font-semibold text-left flex-1">{l.name}</button>
-                    <button onClick={() => del(l.lineup_id)} className="text-slate-400 hover:text-red-600"><TrashIcon size={14} /></button>
+                    <button onClick={() => del(l.lineup_id)} className="text-slate-400 hover:text-red-600"><Trash size={14} /></button>
                   </div>
                 ))}
               </div>}
