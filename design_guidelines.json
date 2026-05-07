@@ -1,0 +1,125 @@
+{
+  "theme": "light",
+  "archetype": "4 (Swiss & High-Contrast)",
+  "design_philosophy": "A clear, functional, and highly visual sports analytics platform. Driven by precision, high contrast, and energetic athletic accents. Avoids generic AI 'slop' aesthetics, specifically banning purple/violet gradients and standard fonts like Inter/Roboto. Designed to feel premium, sporty, and competitive against top-tier apps like Hudl and Volleymetrics.",
+  "typography": {
+    "headings": {
+      "family": "Outfit",
+      "weights": ["600", "700", "800"],
+      "usage": "Use for all headlines, card titles, dashboard metrics, and key emphasis. Communicates sporty precision.",
+      "scales": {
+        "h1": "text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-none",
+        "h2": "text-2xl sm:text-3xl lg:text-4xl tracking-tight leading-tight",
+        "h3": "text-xl sm:text-2xl tracking-tight",
+        "h4": "text-lg sm:text-xl font-semibold"
+      }
+    },
+    "body": {
+      "family": "Manrope",
+      "weights": ["400", "500", "600"],
+      "usage": "Use for dense data tables, dashboard text, datavolley logging buttons, and general UI text. Highly readable for analytics.",
+      "scales": {
+        "large": "text-lg leading-relaxed",
+        "base": "text-base leading-relaxed",
+        "small": "text-sm leading-normal",
+        "tiny": "text-xs uppercase tracking-[0.2em] font-bold"
+      }
+    }
+  },
+  "colors": {
+    "background": {
+      "app": "#F8FAFC",
+      "surface": "#FFFFFF",
+      "surface_hover": "#F1F5F9"
+    },
+    "text": {
+      "primary": "#0F172A",
+      "secondary": "#64748B",
+      "inverse": "#FFFFFF",
+      "accent": "#EA580C"
+    },
+    "brand": {
+      "primary": "#EA580C",
+      "primary_hover": "#C2410C",
+      "secondary": "#1E3A8A",
+      "secondary_hover": "#1E40AF"
+    },
+    "datavolley_status": {
+      "perfect_touch": "#16A34A",
+      "medium_touch": "#EAB308",
+      "error_touch": "#DC2626",
+      "neutral_action": "#3B82F6"
+    },
+    "borders": {
+      "default": "#E2E8F0",
+      "focus": "#EA580C"
+    },
+    "prohibited": [
+      "purple",
+      "violet",
+      "#9D4CDD",
+      "#7351B7"
+    ]
+  },
+  "layout_and_spacing": {
+    "philosophy": "Swiss Grid structure. High density for the datavolley/analytics views, generous spacing for marketing/login views.",
+    "container_padding": "p-4 md:p-6 lg:p-8",
+    "dashboard_grid": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 or gap-6",
+    "bento_grid": "Grid children must use col-span/row-span effectively. Use h-full to stretch items to match neighbors.",
+    "surfaces": "Use flat surfaces (bg-white) with crisp 1px borders (border-slate-200). Use shadow-sm for active states, otherwise prefer flat/no-shadow design for a clean, pro-sports feel."
+  },
+  "components": {
+    "buttons": "Shadcn Button customized with rounded-md (not heavily pill-shaped). Primary buttons use brand Orange. Secondary use brand Deep Blue or outline.",
+    "cards": "Cardless aesthetic where possible, or extremely flat cards. No default heavy shadows. Use border-slate-200.",
+    "inputs": "Shadcn Input/Select. focus:ring-2 focus:ring-orange-500 focus:border-transparent.",
+    "navigation": "Left sidebar for dashboards with subtle active states (bg-slate-100 text-orange-600). Sticky top header with glassmorphism (backdrop-blur-md bg-white/80 border-b border-slate-200).",
+    "datavolley_tracker": "Large, highly-tappable buttons for intermediate mode. Clearly color-coded (Green for Kill/Ace, Red for Error) to prevent misclicks during live action.",
+    "court_visualization": "Hero component. Use a 2D top-down isometric or flat pure SVG court. The court lines should be bright white or orange over a distinct solid background (e.g., deep blue or light wood). Players must be draggable distinct nodes with clear numbers."
+  },
+  "motion": {
+    "interactions": "Snappy, high-performance transitions. transition-all duration-200 ease-in-out for buttons/cards.",
+    "data_updates": "When stats update, use a subtle background flash (e.g., flash light green for a positive stat update) to indicate live recording."
+  },
+  "icons": {
+    "library": "@phosphor-icons/react",
+    "installation": "yarn add @phosphor-icons/react",
+    "usage": "Use Duotone or Regular weights. Essential for representing complex sports analytics data clearly."
+  },
+  "media": {
+    "hero_court_background": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/2ad9bc2a-a78b-40c9-8ca8-c53f4b679f3d/images/04a54c567b35dc7cfbfb6fe6f517a996bc99d87f073277d97776918a92d83f29.png",
+      "description": "Minimalist vector illustration of a volleyball court with glowing tactical lines. Use for landing page hero, login screen background, or tactical board backdrop."
+    },
+    "sports_motion_abstract": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/2ad9bc2a-a78b-40c9-8ca8-c53f4b679f3d/images/2b094471641da29b728793f413686928c4ec7ab73b90d872c5b02a3bf9ddca0f.png",
+      "description": "Dynamic white/gray/orange motion abstract background. Use for onboarding flows or empty states to add visual interest."
+    },
+    "match_action_1": {
+      "url": "https://images.unsplash.com/photo-1732446572692-832ba3d85ac8?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwzfHx2b2xsZXliYWxsJTIwbWF0Y2glMjBhY3Rpb258ZW58MHx8fHwxNzc4MTc1MTYxfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Men playing volleyball. Great for the multimedia gallery or generic match placeholders."
+    },
+    "match_action_2": {
+      "url": "https://images.unsplash.com/photo-1771909713106-86b9a412964a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHwxfHx2b2xsZXliYWxsJTIwbWF0Y2glMjBhY3Rpb258ZW58MHx8fHwxNzc4MTc1MTYxfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Outdoor court volleyball action. Use as fallback image for team profiles or match results."
+    },
+    "coach_tablet": {
+      "url": "https://images.unsplash.com/photo-1634433480471-147fe911ba6b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwyfHxzcG9ydHMlMjBjb2FjaCUyMHRhYmxldHxlbnwwfHx8fDE3NzgxNzUxNjF8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Close up of a person holding a tablet. Excellent contextual image for marketing the datavolley coach features."
+    }
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text, especially within data visualization and on the court UI, meets APCA/WCAG AA contrast ratios (e.g., White text on Deep Blue or Orange, Slate 900 text on Light backgrounds).",
+    "testing_attributes": "All interactive elements, forms, datavolley buttons, and navigation MUST include a `data-testid` attribute (e.g., `data-testid=\"datavolley-btn-ace\"`, `data-testid=\"nav-roster\"`)."
+  },
+  "instructions_to_main_agent": [
+    "Install Google Fonts 'Outfit' and 'Manrope' in the frontend.",
+    "Install @phosphor-icons/react for all iconography.",
+    "Implement JWT + Google Auth login on the landing/auth pages.",
+    "Build a role-based layout: Left sidebar for navigation with options dynamically shown based on role (Head Coach, Assistant, Player).",
+    "Implement the volleyball court visualization using HTML/CSS Grid or an SVG overlay, ensuring 6 draggable/interactive positions for starting lineups.",
+    "Create two DataVolley modes: 1. Intermediate (large color-coded buttons for actions like Serve, Receive, Set, Attack, Block). 2. Advanced (text input or complex pro-style coding).",
+    "Use Recharts for post-match analytics (heat maps, bar charts for efficiency, line charts for momentum).",
+    "Follow the theme strictly: Light mode, high contrast, pure white surfaces against slate-50 backgrounds, with vibrant orange (#EA580C) and deep blue (#1E3A8A) accents.",
+    "Do not use generic Shadcn shadows. Use 1px borders instead for a premium, athletic aesthetic."
+  ]
+}
