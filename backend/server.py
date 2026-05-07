@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, WebSocket, WebSocketDisconnect
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
@@ -91,6 +91,75 @@ async def current_user(request: Request) -> dict:
     user = await db.users.find_one({"user_id": payload["sub"]}, {"_id": 0, "password_hash": 0})
     if not user:
         raise HTTPException(401, "User not found")
+    return user
+
+
+def _is_member(user_id: str, team: dict) -> bool:
+    if not team:
+        return False
+    if user_id == team.get("owner_id"):
+        return True
+    return user_id in [m.get("user_id") for m in team.get("members", [])]
+
+
+async def require_team_member(team_id: str, user: dict) -> dict:
+    team = await db.teams.find_one({"team_id": team_id})
+    if not team:
+        raise HTTPException(404, "Team not found")
+    if not _is_member(user["user_id"], team):
+        raise HTTPException(403, "Not a member of this team")
+    return team
+
+
+async def require_match_member(match_id: str, user: dict) -> dict:
+    match = await db.matches.find_one({"match_id": match_id}, {"_id": 0})
+    if not match:
+        raise HTTPException(404, "Match not found")
+    await require_team_member(match["team_id"], user)
+    return match
+
+
+# ---------- WebSocket Connection Manager ----------
+class ConnectionManager:
+    def __init__(self):
+        self.rooms: Dict[str, set] = {}
+
+    async def connect(self, room: str, ws: WebSocket):
+        await ws.accept()
+        self.rooms.setdefault(room, set()).add(ws)
+
+    def disconnect(self, room: str, ws: WebSocket):
+        if room in self.rooms:
+            self.rooms[room].discard(ws)
+            if not self.rooms[room]:
+                self.rooms.pop(room, None)
+
+    async def broadcast(self, room: str, message: dict):
+        for ws in list(self.rooms.get(room, set())):
+            try:
+                await ws.send_json(message)
+            except Exception:
+                self.rooms.get(room, set()).discard(ws)
+
+
+chat_mgr = ConnectionManager()
+dv_mgr = ConnectionManager()
+
+
+async def _ws_authenticate(websocket: WebSocket) -> Optional[dict]:
+    token = websocket.cookies.get("access_token") or websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008)
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+    except Exception:
+        await websocket.close(code=1008)
+        return None
+    user = await db.users.find_one({"user_id": payload["sub"]}, {"_id": 0, "password_hash": 0})
+    if not user:
+        await websocket.close(code=1008)
+        return None
     return user
 
 
@@ -328,6 +397,14 @@ async def get_team(team_id: str, user=Depends(current_user)):
 
 @api.post("/teams/{team_id}/invite")
 async def invite_member(team_id: str, body: Dict[str, str], user=Depends(current_user)):
+    team = await require_team_member(team_id, user)
+    # only head_coach (owner or member with coach role) can invite
+    is_coach = user["user_id"] == team.get("owner_id") or any(
+        m.get("user_id") == user["user_id"] and m.get("role") in ("head_coach", "assistant_coach")
+        for m in team.get("members", [])
+    )
+    if not is_coach:
+        raise HTTPException(403, "Only coaches can invite")
     email = body.get("email", "").lower().strip()
     role = body.get("role", "player")
     invited = await db.users.find_one({"email": email}, {"_id": 0, "password_hash": 0})
@@ -344,6 +421,7 @@ async def invite_member(team_id: str, body: Dict[str, str], user=Depends(current
 # ---------- Players ----------
 @api.post("/players")
 async def create_player(payload: PlayerIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     pid = gen_id("ply")
     doc = payload.model_dump()
     doc["player_id"] = pid
@@ -355,12 +433,17 @@ async def create_player(payload: PlayerIn, user=Depends(current_user)):
 
 @api.get("/players")
 async def list_players(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     players = await db.players.find({"team_id": team_id}, {"_id": 0}).to_list(200)
     return players
 
 
 @api.delete("/players/{player_id}")
 async def delete_player(player_id: str, user=Depends(current_user)):
+    p = await db.players.find_one({"player_id": player_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(404, "Player not found")
+    await require_team_member(p["team_id"], user)
     await db.players.delete_one({"player_id": player_id})
     return {"ok": True}
 
@@ -368,6 +451,7 @@ async def delete_player(player_id: str, user=Depends(current_user)):
 # ---------- Matches ----------
 @api.post("/matches")
 async def create_match(payload: MatchIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     mid = gen_id("mat")
     doc = payload.model_dump()
     doc["match_id"] = mid
@@ -384,27 +468,28 @@ async def create_match(payload: MatchIn, user=Depends(current_user)):
 
 @api.get("/matches")
 async def list_matches(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     return await db.matches.find({"team_id": team_id}, {"_id": 0}).sort("date", -1).to_list(500)
 
 
 @api.get("/matches/{match_id}")
 async def get_match(match_id: str, user=Depends(current_user)):
-    m = await db.matches.find_one({"match_id": match_id}, {"_id": 0})
-    if not m:
-        raise HTTPException(404, "Match not found")
-    return m
+    return await require_match_member(match_id, user)
 
 
 @api.patch("/matches/{match_id}")
 async def update_match(match_id: str, payload: MatchUpdateIn, user=Depends(current_user)):
+    await require_match_member(match_id, user)
     update = {k: v for k, v in payload.model_dump().items() if v is not None}
     await db.matches.update_one({"match_id": match_id}, {"$set": update})
     m = await db.matches.find_one({"match_id": match_id}, {"_id": 0})
+    await dv_mgr.broadcast(f"match:{match_id}", {"type": "match_update", "data": m})
     return m
 
 
 @api.delete("/matches/{match_id}")
 async def delete_match(match_id: str, user=Depends(current_user)):
+    await require_match_member(match_id, user)
     await db.matches.delete_one({"match_id": match_id})
     await db.stats.delete_many({"match_id": match_id})
     return {"ok": True}
@@ -413,6 +498,7 @@ async def delete_match(match_id: str, user=Depends(current_user)):
 # ---------- Stats (Datavolley) ----------
 @api.post("/stats")
 async def add_stat(payload: StatIn, user=Depends(current_user)):
+    await require_match_member(payload.match_id, user)
     sid = gen_id("st")
     doc = payload.model_dump()
     doc["stat_id"] = sid
@@ -421,22 +507,36 @@ async def add_stat(payload: StatIn, user=Depends(current_user)):
         doc["timestamp"] = doc["created_at"]
     await db.stats.insert_one(doc)
     doc.pop("_id", None)
+    summary = await _compute_summary(payload.match_id)
+    await dv_mgr.broadcast(
+        f"match:{payload.match_id}",
+        {"type": "stat_added", "data": doc, "summary": summary},
+    )
     return doc
 
 
 @api.get("/stats")
 async def list_stats(match_id: str, user=Depends(current_user)):
+    await require_match_member(match_id, user)
     return await db.stats.find({"match_id": match_id}, {"_id": 0}).sort("created_at", 1).to_list(5000)
 
 
 @api.delete("/stats/{stat_id}")
 async def delete_stat(stat_id: str, user=Depends(current_user)):
+    s = await db.stats.find_one({"stat_id": stat_id}, {"_id": 0})
+    if not s:
+        raise HTTPException(404, "Stat not found")
+    await require_match_member(s["match_id"], user)
     await db.stats.delete_one({"stat_id": stat_id})
+    summary = await _compute_summary(s["match_id"])
+    await dv_mgr.broadcast(
+        f"match:{s['match_id']}",
+        {"type": "stat_deleted", "stat_id": stat_id, "summary": summary},
+    )
     return {"ok": True}
 
 
-@api.get("/stats/summary")
-async def stats_summary(match_id: str, user=Depends(current_user)):
+async def _compute_summary(match_id: str) -> Dict[str, Dict[str, int]]:
     stats = await db.stats.find({"match_id": match_id}, {"_id": 0}).to_list(5000)
     summary: Dict[str, Dict[str, int]] = {}
     for s in stats:
@@ -459,9 +559,16 @@ async def stats_summary(match_id: str, user=Depends(current_user)):
     return summary
 
 
+@api.get("/stats/summary")
+async def stats_summary(match_id: str, user=Depends(current_user)):
+    await require_match_member(match_id, user)
+    return await _compute_summary(match_id)
+
+
 # ---------- Lineups ----------
 @api.post("/lineups")
 async def create_lineup(payload: LineupIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     lid = gen_id("ln")
     doc = payload.model_dump()
     doc["lineup_id"] = lid
@@ -473,11 +580,16 @@ async def create_lineup(payload: LineupIn, user=Depends(current_user)):
 
 @api.get("/lineups")
 async def list_lineups(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     return await db.lineups.find({"team_id": team_id}, {"_id": 0}).to_list(500)
 
 
 @api.delete("/lineups/{lineup_id}")
 async def delete_lineup(lineup_id: str, user=Depends(current_user)):
+    l = await db.lineups.find_one({"lineup_id": lineup_id}, {"_id": 0})
+    if not l:
+        raise HTTPException(404, "Lineup not found")
+    await require_team_member(l["team_id"], user)
     await db.lineups.delete_one({"lineup_id": lineup_id})
     return {"ok": True}
 
@@ -485,6 +597,7 @@ async def delete_lineup(lineup_id: str, user=Depends(current_user)):
 # ---------- Trainings ----------
 @api.post("/trainings")
 async def create_training(payload: TrainingIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     tid = gen_id("tr")
     doc = payload.model_dump()
     doc["training_id"] = tid
@@ -496,17 +609,26 @@ async def create_training(payload: TrainingIn, user=Depends(current_user)):
 
 @api.get("/trainings")
 async def list_trainings(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     return await db.trainings.find({"team_id": team_id}, {"_id": 0}).sort("date", -1).to_list(500)
 
 
 @api.delete("/trainings/{training_id}")
 async def delete_training(training_id: str, user=Depends(current_user)):
+    t = await db.trainings.find_one({"training_id": training_id}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Training not found")
+    await require_team_member(t["team_id"], user)
     await db.trainings.delete_one({"training_id": training_id})
     return {"ok": True}
 
 
 @api.post("/attendance")
 async def mark_attendance(payload: AttendanceIn, user=Depends(current_user)):
+    t = await db.trainings.find_one({"training_id": payload.training_id}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Training not found")
+    await require_team_member(t["team_id"], user)
     await db.attendance.update_one(
         {"training_id": payload.training_id, "player_id": payload.player_id},
         {"$set": payload.model_dump() | {"updated_at": now_iso()}},
@@ -517,12 +639,17 @@ async def mark_attendance(payload: AttendanceIn, user=Depends(current_user)):
 
 @api.get("/attendance")
 async def get_attendance(training_id: str, user=Depends(current_user)):
+    t = await db.trainings.find_one({"training_id": training_id}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Training not found")
+    await require_team_member(t["team_id"], user)
     return await db.attendance.find({"training_id": training_id}, {"_id": 0}).to_list(200)
 
 
 # ---------- Communications ----------
 @api.post("/announcements")
 async def create_announcement(payload: AnnouncementIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     aid = gen_id("ann")
     doc = payload.model_dump()
     doc["announcement_id"] = aid
@@ -536,17 +663,23 @@ async def create_announcement(payload: AnnouncementIn, user=Depends(current_user
 
 @api.get("/announcements")
 async def list_announcements(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     return await db.announcements.find({"team_id": team_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
 
 
 @api.delete("/announcements/{announcement_id}")
 async def delete_announcement(announcement_id: str, user=Depends(current_user)):
+    a = await db.announcements.find_one({"announcement_id": announcement_id}, {"_id": 0})
+    if not a:
+        raise HTTPException(404, "Announcement not found")
+    await require_team_member(a["team_id"], user)
     await db.announcements.delete_one({"announcement_id": announcement_id})
     return {"ok": True}
 
 
 @api.post("/messages")
 async def post_message(payload: MessageIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     mid = gen_id("msg")
     doc = payload.model_dump()
     doc["message_id"] = mid
@@ -556,17 +689,20 @@ async def post_message(payload: MessageIn, user=Depends(current_user)):
     doc["created_at"] = now_iso()
     await db.messages.insert_one(doc)
     doc.pop("_id", None)
+    await chat_mgr.broadcast(f"team:{payload.team_id}", {"type": "message", "data": doc})
     return doc
 
 
 @api.get("/messages")
 async def list_messages(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     return await db.messages.find({"team_id": team_id}, {"_id": 0}).sort("created_at", 1).to_list(500)
 
 
 # ---------- Gallery ----------
 @api.post("/gallery")
 async def add_gallery(payload: GalleryIn, user=Depends(current_user)):
+    await require_team_member(payload.team_id, user)
     gid = gen_id("gal")
     doc = payload.model_dump()
     doc["gallery_id"] = gid
@@ -579,13 +715,79 @@ async def add_gallery(payload: GalleryIn, user=Depends(current_user)):
 
 @api.get("/gallery")
 async def list_gallery(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
     return await db.gallery.find({"team_id": team_id}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 
 @api.delete("/gallery/{gallery_id}")
 async def delete_gallery(gallery_id: str, user=Depends(current_user)):
+    g = await db.gallery.find_one({"gallery_id": gallery_id}, {"_id": 0})
+    if not g:
+        raise HTTPException(404, "Gallery item not found")
+    await require_team_member(g["team_id"], user)
     await db.gallery.delete_one({"gallery_id": gallery_id})
     return {"ok": True}
+
+
+# ---------- WebSockets ----------
+@api.websocket("/ws/chat/{team_id}")
+async def ws_chat(websocket: WebSocket, team_id: str):
+    user = await _ws_authenticate(websocket)
+    if not user:
+        return
+    team = await db.teams.find_one({"team_id": team_id})
+    if not team or not _is_member(user["user_id"], team):
+        await websocket.close(code=1008)
+        return
+    room = f"team:{team_id}"
+    await chat_mgr.connect(room, websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            body = (data.get("body") or "").strip()
+            if not body:
+                continue
+            doc = {
+                "message_id": gen_id("msg"),
+                "team_id": team_id,
+                "body": body,
+                "author_id": user["user_id"],
+                "author_name": user.get("name", ""),
+                "author_picture": user.get("picture"),
+                "created_at": now_iso(),
+            }
+            await db.messages.insert_one(doc)
+            doc.pop("_id", None)
+            await chat_mgr.broadcast(room, {"type": "message", "data": doc})
+    except WebSocketDisconnect:
+        chat_mgr.disconnect(room, websocket)
+    except Exception:
+        chat_mgr.disconnect(room, websocket)
+
+
+@api.websocket("/ws/datavolley/{match_id}")
+async def ws_datavolley(websocket: WebSocket, match_id: str):
+    user = await _ws_authenticate(websocket)
+    if not user:
+        return
+    match = await db.matches.find_one({"match_id": match_id})
+    if not match:
+        await websocket.close(code=1008)
+        return
+    team = await db.teams.find_one({"team_id": match["team_id"]})
+    if not team or not _is_member(user["user_id"], team):
+        await websocket.close(code=1008)
+        return
+    room = f"match:{match_id}"
+    await dv_mgr.connect(room, websocket)
+    try:
+        while True:
+            # keepalive — clients can also send ping payloads
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        dv_mgr.disconnect(room, websocket)
+    except Exception:
+        dv_mgr.disconnect(room, websocket)
 
 
 # ---------- Health ----------

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, formatErr } from "../lib/api";
 import { Card } from "../components/ui/card";
@@ -36,6 +36,8 @@ export default function MatchDetail() {
   const [activePlayer, setActivePlayer] = useState(null);
   const [advCode, setAdvCode] = useState("");
   const [scoreEdit, setScoreEdit] = useState({ home: 0, away: 0 });
+  const [live, setLive] = useState(false);
+  const wsRef = useRef(null);
 
   const load = async () => {
     const m = await api.get(`/matches/${id}`);
@@ -51,6 +53,35 @@ export default function MatchDetail() {
 
   useEffect(() => { load(); /* eslint-disable-line */ }, [id]);
 
+  useEffect(() => {
+    const base = process.env.REACT_APP_BACKEND_URL.replace(/^http/, "ws");
+    const ws = new WebSocket(`${base}/api/ws/datavolley/${id}`);
+    wsRef.current = ws;
+    ws.onopen = () => setLive(true);
+    ws.onclose = () => setLive(false);
+    ws.onerror = () => setLive(false);
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "stat_added") {
+          setStats(prev => [...prev, msg.data]);
+          setSummary(msg.summary || {});
+        } else if (msg.type === "stat_deleted") {
+          setStats(prev => prev.filter(s => s.stat_id !== msg.stat_id));
+          setSummary(msg.summary || {});
+        } else if (msg.type === "match_update") {
+          setMatch(msg.data);
+          setScoreEdit({ home: msg.data.home_score, away: msg.data.away_score });
+        }
+      } catch (_) {}
+    };
+    // keepalive ping every 25s
+    const ping = setInterval(() => {
+      if (ws.readyState === 1) ws.send("ping");
+    }, 25000);
+    return () => { clearInterval(ping); try { ws.close(); } catch (_) {} };
+  }, [id]);
+
   const log = async (act) => {
     if (!activePlayer) { toast.error("Selecciona un jugador"); return; }
     try {
@@ -59,7 +90,7 @@ export default function MatchDetail() {
         action: act.action, quality: act.quality
       });
       toast.success(`${act.label} • #${players.find(p => p.player_id === activePlayer)?.number}`);
-      load();
+      // WS will push the update; no need to reload
     } catch (e) { toast.error(formatErr(e)); }
   };
 
@@ -81,7 +112,6 @@ export default function MatchDetail() {
       });
       setAdvCode("");
       toast.success(`Codificada: ${code}`);
-      load();
     } catch (e) { toast.error(formatErr(e)); }
   };
 
@@ -90,19 +120,16 @@ export default function MatchDetail() {
     if (!last) return;
     await api.delete(`/stats/${last.stat_id}`);
     toast.success("Última acción eliminada");
-    load();
   };
 
   const saveScore = async () => {
     await api.patch(`/matches/${id}`, { home_score: Number(scoreEdit.home), away_score: Number(scoreEdit.away) });
     toast.success("Marcador actualizado");
-    load();
   };
 
   const setStatus = async (status) => {
     await api.patch(`/matches/${id}`, { status });
     toast.success(`Partido marcado como ${status}`);
-    load();
   };
 
   if (!match) return <p>Cargando...</p>;
@@ -227,7 +254,7 @@ export default function MatchDetail() {
               {stats.slice(-15).reverse().map(s => (
                 <div key={s.stat_id} className="flex items-center justify-between text-sm py-1 border-b border-slate-50">
                   <span>Set {s.set_number} • <strong>#{playerNum(s.player_id)}</strong> {s.action} → <em>{s.quality}</em>{s.code ? <code className="ml-2 text-xs bg-slate-100 px-1 rounded">{s.code}</code> : ""}</span>
-                  <button onClick={async () => { await api.delete(`/stats/${s.stat_id}`); load(); }} className="text-slate-400 hover:text-red-600"><Trash size={14} /></button>
+                  <button onClick={async () => { await api.delete(`/stats/${s.stat_id}`); }} className="text-slate-400 hover:text-red-600"><Trash size={14} /></button>
                 </div>
               ))}
               {stats.length === 0 && <p className="text-slate-500 text-sm py-2">Sin registros.</p>}

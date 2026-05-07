@@ -1,0 +1,42 @@
+{
+  "summary": "Iteration 3 — full validation of (a) team-member authorization on 20+ resource endpoints and (b) two new WebSocket endpoints (chat & datavolley) PASSED 100%. 47/47 pytest tests green; live cross-tab chat + cross-tab datavolley stat updates verified in real browser via Playwright with two contexts.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_authz_and_ws.py",
+    "/app/test_reports/pytest/iter3_results.xml"
+  ],
+  "action_items": [
+    "(Carry-over, optional) CORS still uses allow_origins=['*'] together with allow_credentials=True. While the regex catches it, prefer an explicit origin list for production hardening.",
+    "(Carry-over, optional) /api/auth/me probe still emits 401 in console on unauthenticated landing.",
+    "(Optional) MatchDetail.jsx has no visible 'en vivo' indicator like Communications.jsx — coaches can't tell if datavolley WS is live without inspecting devtools."
+  ],
+  "critical_code_review_comments": [
+    "ConnectionManager.broadcast iterates over a copy via list() — good. However on send_json failure it discards from the original set: if the room was already cleaned up by disconnect() the .get(...,set()).discard() call works on a transient empty set silently — acceptable.",
+    "ws_chat in server.py only checks team membership at connect time; if a user is removed from the team mid-session their socket remains open and they continue receiving messages. Consider periodic re-auth or invalidating sockets on team membership change.",
+    "_ws_authenticate uses generic except Exception which swallows JWT errors silently into a 1008 close; that is fine for prod but log.warning() would help debugging.",
+    "delete_match cascades into stats (good) but does NOT broadcast match_deleted on dv room nor close subscribed websockets — connected clients will keep watching a non-existent match.",
+    "All 20+ endpoints now properly require_team_member / require_match_member — DELETEs all return 404 on unknown id and 403 on cross-team access (priority 404 first when resource doesn't exist).",
+    "server.py is now ~840 lines; still recommended to split into routers."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_authz_and_ws.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (47/47 pytest, including 29 authz, 5 member regression, 7 delete-404, 6 websocket)",
+    "frontend": "100% on critical WS flows (chat live, cross-tab chat, cross-tab datavolley live summary)"
+  },
+  "test_credentials": "admin@zentia.com / ZentiaAdmin2026! (works). Test users created during run: coachA_<uniq>@test.zentia.com and coachB_<uniq>@test.zentia.com / Pass1234!",
+  "seed_data_creation": "Each pytest run creates two fresh users + TEST_TeamA/TEST_TeamB with player, match, stat, lineup, training, announcement, gallery prefixed TEST_. Not auto-cleaned but isolated by random UNIQ suffix.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Authorization + WebSockets are fully working. Use /app/backend/tests/test_authz_and_ws.py as regression suite (run with --asyncio-mode=auto). For frontend WS testing, use two playwright contexts; selectors confirmed: nav-communications, message-input, send-message-btn, nav-matches, select-player-{id}, dv-kill, dv-ace etc. Login form uses input[type='email']/[type='password']/button[type='submit'] (no login-email testid).",
+  "rca of the issue": "No bug found in iteration 3. All requested authorization and WebSocket features work as specified."
+}

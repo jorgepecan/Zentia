@@ -14,23 +14,54 @@ export default function Communications() {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [connected, setConnected] = useState(false);
+  const wsRef = useRef(null);
   const endRef = useRef(null);
 
-  const load = async () => {
+  // initial load + websocket
+  useEffect(() => {
     if (!activeTeam) return;
-    const { data } = await api.get(`/messages?team_id=${activeTeam.team_id}`);
-    setMessages(data);
-  };
-  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); /* eslint-disable-line */ }, [activeTeam]);
+    let alive = true;
+
+    (async () => {
+      try {
+        const { data } = await api.get(`/messages?team_id=${activeTeam.team_id}`);
+        if (alive) setMessages(data);
+      } catch (_) {}
+    })();
+
+    const base = process.env.REACT_APP_BACKEND_URL.replace(/^http/, "ws");
+    const ws = new WebSocket(`${base}/api/ws/chat/${activeTeam.team_id}`);
+    wsRef.current = ws;
+    ws.onopen = () => setConnected(true);
+    ws.onclose = () => setConnected(false);
+    ws.onerror = () => setConnected(false);
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "message") setMessages((prev) => [...prev, msg.data]);
+      } catch (_) {}
+    };
+
+    return () => {
+      alive = false;
+      try { ws.close(); } catch (_) {}
+    };
+  }, [activeTeam]);
+
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const send = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
+    const body = text;
+    setText("");
     try {
-      await api.post("/messages", { team_id: activeTeam.team_id, body: text });
-      setText("");
-      load();
+      if (wsRef.current && wsRef.current.readyState === 1) {
+        wsRef.current.send(JSON.stringify({ body }));
+      } else {
+        await api.post("/messages", { team_id: activeTeam.team_id, body });
+      }
     } catch (e) { toast.error(formatErr(e)); }
   };
 
@@ -38,9 +69,14 @@ export default function Communications() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <div>
-        <h2 className="font-heading text-3xl font-bold tracking-tight">Comunicación</h2>
-        <p className="text-slate-500 text-sm">Canal del equipo en tiempo real.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="font-heading text-3xl font-bold tracking-tight">Comunicación</h2>
+          <p className="text-slate-500 text-sm">Canal del equipo en tiempo real.</p>
+        </div>
+        <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded ${connected ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+          {connected ? "● en vivo" : "○ offline"}
+        </span>
       </div>
 
       <Card className="zentia-card p-0 shadow-none flex flex-col h-[70vh]">
