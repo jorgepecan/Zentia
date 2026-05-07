@@ -1,89 +1,634 @@
-from fastapi import FastAPI, APIRouter
 from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
-
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
+from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from starlette.middleware.cors import CORSMiddleware
+from motor.motor_asyncio import AsyncIOMotorClient
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timezone, timedelta
+import os
+import uuid
+import logging
+import bcrypt
+import jwt
+import requests as http_requests
+
+# ---------- DB ----------
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
+# ---------- App ----------
+app = FastAPI(title="Zentia VolleyPro API")
+api = APIRouter(prefix="/api")
 
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev_secret_change_me")
+JWT_ALG = "HS256"
+
+logger = logging.getLogger("zentia")
+logging.basicConfig(level=logging.INFO)
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# ---------- Helpers ----------
+def hash_password(p: str) -> str:
+    return bcrypt.hashpw(p.encode(), bcrypt.gensalt()).decode()
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
 
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
+def verify_password(p: str, h: str) -> bool:
+    try:
+        return bcrypt.checkpw(p.encode(), h.encode())
+    except Exception:
+        return False
+
+
+def create_token(user_id: str, kind: str = "access", days: int = 7) -> str:
+    payload = {
+        "sub": user_id,
+        "type": kind,
+        "exp": datetime.now(timezone.utc) + timedelta(days=days),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+
+def set_auth_cookie(response: Response, token: str):
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7 * 24 * 3600,
+        path="/",
+    )
+
+
+def gen_id(prefix: str) -> str:
+    return f"{prefix}_{uuid.uuid4().hex[:12]}"
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+async def current_user(request: Request) -> dict:
+    token = request.cookies.get("access_token")
+    if not token:
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            token = auth[7:]
+    if not token:
+        raise HTTPException(401, "Not authenticated")
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(401, "Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(401, "Invalid token")
+    user = await db.users.find_one({"user_id": payload["sub"]}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(401, "User not found")
+    return user
+
+
+# ---------- Models ----------
+class RegisterIn(BaseModel):
+    email: EmailStr
+    password: str
+    name: str
+    role: str = "head_coach"  # head_coach | assistant_coach | player
+
+
+class LoginIn(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class GoogleSessionIn(BaseModel):
+    session_id: str
+
+
+class TeamIn(BaseModel):
+    name: str
+    category: Optional[str] = ""
+    season: Optional[str] = ""
+    color: Optional[str] = "#EA580C"
+
+
+class PlayerIn(BaseModel):
+    team_id: str
+    name: str
+    number: int
+    position: str  # OH, OPP, MB, S, L, DS
+    height_cm: Optional[int] = None
+    user_id: Optional[str] = None  # link to a player account if exists
+
+
+class MatchIn(BaseModel):
+    team_id: str
+    opponent: str
+    date: str
+    location: Optional[str] = ""
+    home: bool = True
+
+
+class MatchUpdateIn(BaseModel):
+    home_score: Optional[int] = None
+    away_score: Optional[int] = None
+    sets: Optional[List[Dict[str, int]]] = None  # [{home: 25, away: 23}]
+    status: Optional[str] = None  # scheduled | live | finished
+    notes: Optional[str] = None
+
+
+class StatIn(BaseModel):
+    match_id: str
+    player_id: str
+    set_number: int = 1
+    action: str  # serve, attack, block, dig, set, reception
+    quality: str  # ace, kill, error, perfect, medium, neutral
+    code: Optional[str] = None  # advanced datavolley code
+    timestamp: Optional[str] = None
+
+
+class LineupIn(BaseModel):
+    team_id: str
+    match_id: Optional[str] = None
+    name: str
+    positions: Dict[str, str]  # {"P1": player_id, "P2": player_id, ...}
+
+
+class TrainingIn(BaseModel):
+    team_id: str
+    title: str
+    date: str
+    location: Optional[str] = ""
+    notes: Optional[str] = ""
+
+
+class AttendanceIn(BaseModel):
+    training_id: str
+    player_id: str
+    status: str  # present, absent, late, excused
+
+
+class AnnouncementIn(BaseModel):
+    team_id: str
+    title: str
+    body: str
+    pinned: bool = False
+
+
+class MessageIn(BaseModel):
+    team_id: str
+    body: str
+
+
+class GalleryIn(BaseModel):
+    team_id: str
+    url: str
+    caption: Optional[str] = ""
+    kind: str = "image"  # image | video
+
+
+# ---------- Auth Routes ----------
+@api.post("/auth/register")
+async def register(payload: RegisterIn, response: Response):
+    email = payload.email.lower().strip()
+    if await db.users.find_one({"email": email}):
+        raise HTTPException(400, "Email already registered")
+    user_id = gen_id("user")
+    doc = {
+        "user_id": user_id,
+        "email": email,
+        "name": payload.name,
+        "role": payload.role,
+        "password_hash": hash_password(payload.password),
+        "auth_provider": "local",
+        "picture": None,
+        "team_ids": [],
+        "created_at": now_iso(),
+    }
+    await db.users.insert_one(doc)
+    token = create_token(user_id)
+    set_auth_cookie(response, token)
+    doc.pop("password_hash", None)
+    doc.pop("_id", None)
+    return {"user": doc, "token": token}
+
+
+@api.post("/auth/login")
+async def login(payload: LoginIn, response: Response):
+    email = payload.email.lower().strip()
+    user = await db.users.find_one({"email": email})
+    if not user or not user.get("password_hash") or not verify_password(payload.password, user["password_hash"]):
+        raise HTTPException(401, "Invalid credentials")
+    token = create_token(user["user_id"])
+    set_auth_cookie(response, token)
+    user.pop("password_hash", None)
+    user.pop("_id", None)
+    return {"user": user, "token": token}
+
+
+@api.post("/auth/google/session")
+async def google_session(payload: GoogleSessionIn, response: Response):
+    """REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH"""
+    try:
+        r = http_requests.get(
+            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+            headers={"X-Session-ID": payload.session_id},
+            timeout=10,
+        )
+        if r.status_code != 200:
+            raise HTTPException(401, "Invalid session")
+        data = r.json()
+    except Exception as e:
+        raise HTTPException(401, f"Auth error: {e}")
+
+    email = data["email"].lower()
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        user_id = existing["user_id"]
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"name": data.get("name"), "picture": data.get("picture")}},
+        )
+    else:
+        user_id = gen_id("user")
+        await db.users.insert_one({
+            "user_id": user_id,
+            "email": email,
+            "name": data.get("name", email),
+            "role": "head_coach",
+            "auth_provider": "google",
+            "picture": data.get("picture"),
+            "team_ids": [],
+            "created_at": now_iso(),
+        })
+
+    token = create_token(user_id)
+    set_auth_cookie(response, token)
+    user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+    return {"user": user, "token": token}
+
+
+@api.get("/auth/me")
+async def me(user=Depends(current_user)):
+    return user
+
+
+@api.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie("access_token", path="/")
+    return {"ok": True}
+
+
+# ---------- Teams ----------
+@api.post("/teams")
+async def create_team(payload: TeamIn, user=Depends(current_user)):
+    team_id = gen_id("team")
+    doc = {
+        "team_id": team_id,
+        "name": payload.name,
+        "category": payload.category,
+        "season": payload.season,
+        "color": payload.color,
+        "owner_id": user["user_id"],
+        "members": [{"user_id": user["user_id"], "role": "head_coach"}],
+        "created_at": now_iso(),
+    }
+    await db.teams.insert_one(doc)
+    await db.users.update_one({"user_id": user["user_id"]}, {"$addToSet": {"team_ids": team_id}})
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/teams")
+async def list_teams(user=Depends(current_user)):
+    teams = await db.teams.find(
+        {"$or": [{"owner_id": user["user_id"]}, {"members.user_id": user["user_id"]}]},
+        {"_id": 0},
+    ).to_list(200)
+    return teams
+
+
+@api.get("/teams/{team_id}")
+async def get_team(team_id: str, user=Depends(current_user)):
+    t = await db.teams.find_one({"team_id": team_id}, {"_id": 0})
+    if not t:
+        raise HTTPException(404, "Team not found")
+    return t
+
+
+@api.post("/teams/{team_id}/invite")
+async def invite_member(team_id: str, body: Dict[str, str], user=Depends(current_user)):
+    email = body.get("email", "").lower().strip()
+    role = body.get("role", "player")
+    invited = await db.users.find_one({"email": email}, {"_id": 0, "password_hash": 0})
+    if not invited:
+        raise HTTPException(404, "User not found. Ask them to register first.")
+    await db.teams.update_one(
+        {"team_id": team_id},
+        {"$addToSet": {"members": {"user_id": invited["user_id"], "role": role}}},
+    )
+    await db.users.update_one({"user_id": invited["user_id"]}, {"$addToSet": {"team_ids": team_id}})
+    return {"ok": True, "user": invited}
+
+
+# ---------- Players ----------
+@api.post("/players")
+async def create_player(payload: PlayerIn, user=Depends(current_user)):
+    pid = gen_id("ply")
+    doc = payload.model_dump()
+    doc["player_id"] = pid
+    doc["created_at"] = now_iso()
+    await db.players.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/players")
+async def list_players(team_id: str, user=Depends(current_user)):
+    players = await db.players.find({"team_id": team_id}, {"_id": 0}).to_list(200)
+    return players
+
+
+@api.delete("/players/{player_id}")
+async def delete_player(player_id: str, user=Depends(current_user)):
+    await db.players.delete_one({"player_id": player_id})
+    return {"ok": True}
+
+
+# ---------- Matches ----------
+@api.post("/matches")
+async def create_match(payload: MatchIn, user=Depends(current_user)):
+    mid = gen_id("mat")
+    doc = payload.model_dump()
+    doc["match_id"] = mid
+    doc["status"] = "scheduled"
+    doc["home_score"] = 0
+    doc["away_score"] = 0
+    doc["sets"] = []
+    doc["notes"] = ""
+    doc["created_at"] = now_iso()
+    await db.matches.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/matches")
+async def list_matches(team_id: str, user=Depends(current_user)):
+    return await db.matches.find({"team_id": team_id}, {"_id": 0}).sort("date", -1).to_list(500)
+
+
+@api.get("/matches/{match_id}")
+async def get_match(match_id: str, user=Depends(current_user)):
+    m = await db.matches.find_one({"match_id": match_id}, {"_id": 0})
+    if not m:
+        raise HTTPException(404, "Match not found")
+    return m
+
+
+@api.patch("/matches/{match_id}")
+async def update_match(match_id: str, payload: MatchUpdateIn, user=Depends(current_user)):
+    update = {k: v for k, v in payload.model_dump().items() if v is not None}
+    await db.matches.update_one({"match_id": match_id}, {"$set": update})
+    m = await db.matches.find_one({"match_id": match_id}, {"_id": 0})
+    return m
+
+
+@api.delete("/matches/{match_id}")
+async def delete_match(match_id: str, user=Depends(current_user)):
+    await db.matches.delete_one({"match_id": match_id})
+    await db.stats.delete_many({"match_id": match_id})
+    return {"ok": True}
+
+
+# ---------- Stats (Datavolley) ----------
+@api.post("/stats")
+async def add_stat(payload: StatIn, user=Depends(current_user)):
+    sid = gen_id("st")
+    doc = payload.model_dump()
+    doc["stat_id"] = sid
+    doc["created_at"] = now_iso()
+    if not doc.get("timestamp"):
+        doc["timestamp"] = doc["created_at"]
+    await db.stats.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/stats")
+async def list_stats(match_id: str, user=Depends(current_user)):
+    return await db.stats.find({"match_id": match_id}, {"_id": 0}).sort("created_at", 1).to_list(5000)
+
+
+@api.delete("/stats/{stat_id}")
+async def delete_stat(stat_id: str, user=Depends(current_user)):
+    await db.stats.delete_one({"stat_id": stat_id})
+    return {"ok": True}
+
+
+@api.get("/stats/summary")
+async def stats_summary(match_id: str, user=Depends(current_user)):
+    stats = await db.stats.find({"match_id": match_id}, {"_id": 0}).to_list(5000)
+    summary: Dict[str, Dict[str, int]] = {}
+    for s in stats:
+        pid = s["player_id"]
+        if pid not in summary:
+            summary[pid] = {"kills": 0, "errors": 0, "aces": 0, "blocks": 0, "digs": 0, "total": 0}
+        summary[pid]["total"] += 1
+        q = s.get("quality")
+        a = s.get("action")
+        if a == "attack" and q == "kill":
+            summary[pid]["kills"] += 1
+        elif a == "serve" and q == "ace":
+            summary[pid]["aces"] += 1
+        elif a == "block" and q in ("kill", "perfect"):
+            summary[pid]["blocks"] += 1
+        elif a == "dig" and q == "perfect":
+            summary[pid]["digs"] += 1
+        if q == "error":
+            summary[pid]["errors"] += 1
+    return summary
+
+
+# ---------- Lineups ----------
+@api.post("/lineups")
+async def create_lineup(payload: LineupIn, user=Depends(current_user)):
+    lid = gen_id("ln")
+    doc = payload.model_dump()
+    doc["lineup_id"] = lid
+    doc["created_at"] = now_iso()
+    await db.lineups.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/lineups")
+async def list_lineups(team_id: str, user=Depends(current_user)):
+    return await db.lineups.find({"team_id": team_id}, {"_id": 0}).to_list(500)
+
+
+@api.delete("/lineups/{lineup_id}")
+async def delete_lineup(lineup_id: str, user=Depends(current_user)):
+    await db.lineups.delete_one({"lineup_id": lineup_id})
+    return {"ok": True}
+
+
+# ---------- Trainings ----------
+@api.post("/trainings")
+async def create_training(payload: TrainingIn, user=Depends(current_user)):
+    tid = gen_id("tr")
+    doc = payload.model_dump()
+    doc["training_id"] = tid
+    doc["created_at"] = now_iso()
+    await db.trainings.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/trainings")
+async def list_trainings(team_id: str, user=Depends(current_user)):
+    return await db.trainings.find({"team_id": team_id}, {"_id": 0}).sort("date", -1).to_list(500)
+
+
+@api.delete("/trainings/{training_id}")
+async def delete_training(training_id: str, user=Depends(current_user)):
+    await db.trainings.delete_one({"training_id": training_id})
+    return {"ok": True}
+
+
+@api.post("/attendance")
+async def mark_attendance(payload: AttendanceIn, user=Depends(current_user)):
+    await db.attendance.update_one(
+        {"training_id": payload.training_id, "player_id": payload.player_id},
+        {"$set": payload.model_dump() | {"updated_at": now_iso()}},
+        upsert=True,
+    )
+    return {"ok": True}
+
+
+@api.get("/attendance")
+async def get_attendance(training_id: str, user=Depends(current_user)):
+    return await db.attendance.find({"training_id": training_id}, {"_id": 0}).to_list(200)
+
+
+# ---------- Communications ----------
+@api.post("/announcements")
+async def create_announcement(payload: AnnouncementIn, user=Depends(current_user)):
+    aid = gen_id("ann")
+    doc = payload.model_dump()
+    doc["announcement_id"] = aid
+    doc["author_id"] = user["user_id"]
+    doc["author_name"] = user.get("name", "")
+    doc["created_at"] = now_iso()
+    await db.announcements.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/announcements")
+async def list_announcements(team_id: str, user=Depends(current_user)):
+    return await db.announcements.find({"team_id": team_id}, {"_id": 0}).sort("created_at", -1).to_list(200)
+
+
+@api.delete("/announcements/{announcement_id}")
+async def delete_announcement(announcement_id: str, user=Depends(current_user)):
+    await db.announcements.delete_one({"announcement_id": announcement_id})
+    return {"ok": True}
+
+
+@api.post("/messages")
+async def post_message(payload: MessageIn, user=Depends(current_user)):
+    mid = gen_id("msg")
+    doc = payload.model_dump()
+    doc["message_id"] = mid
+    doc["author_id"] = user["user_id"]
+    doc["author_name"] = user.get("name", "")
+    doc["author_picture"] = user.get("picture")
+    doc["created_at"] = now_iso()
+    await db.messages.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/messages")
+async def list_messages(team_id: str, user=Depends(current_user)):
+    return await db.messages.find({"team_id": team_id}, {"_id": 0}).sort("created_at", 1).to_list(500)
+
+
+# ---------- Gallery ----------
+@api.post("/gallery")
+async def add_gallery(payload: GalleryIn, user=Depends(current_user)):
+    gid = gen_id("gal")
+    doc = payload.model_dump()
+    doc["gallery_id"] = gid
+    doc["author_id"] = user["user_id"]
+    doc["created_at"] = now_iso()
+    await db.gallery.insert_one(doc)
+    doc.pop("_id", None)
+    return doc
+
+
+@api.get("/gallery")
+async def list_gallery(team_id: str, user=Depends(current_user)):
+    return await db.gallery.find({"team_id": team_id}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api.delete("/gallery/{gallery_id}")
+async def delete_gallery(gallery_id: str, user=Depends(current_user)):
+    await db.gallery.delete_one({"gallery_id": gallery_id})
+    return {"ok": True}
+
+
+# ---------- Health ----------
+@api.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"app": "Zentia VolleyPro", "status": "ok"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
-app.include_router(api_router)
+# ---------- Mount ----------
+app.include_router(api)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=["*"],
+    allow_origin_regex=".*",
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+
+@app.on_event("startup")
+async def startup():
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("user_id", unique=True)
+    await db.teams.create_index("team_id", unique=True)
+    await db.players.create_index("player_id", unique=True)
+    await db.matches.create_index("match_id", unique=True)
+    # seed admin
+    admin_email = os.environ.get("ADMIN_EMAIL", "admin@zentia.com")
+    admin_password = os.environ.get("ADMIN_PASSWORD", "ZentiaAdmin2026!")
+    existing = await db.users.find_one({"email": admin_email})
+    if not existing:
+        await db.users.insert_one({
+            "user_id": gen_id("user"),
+            "email": admin_email,
+            "name": "Zentia Admin",
+            "role": "head_coach",
+            "password_hash": hash_password(admin_password),
+            "auth_provider": "local",
+            "picture": None,
+            "team_ids": [],
+            "created_at": now_iso(),
+        })
+        logger.info("Admin user seeded")
+
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
+async def shutdown():
     client.close()

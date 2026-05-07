@@ -1,115 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
+:root {
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 21 90% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 25%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 21 90% 96%;
+    --accent-foreground: 21 90% 35%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 21 90% 48%;
+    --radius: 0.5rem;
+}
+
+* {
+    border-color: hsl(var(--border));
+}
+
+html, body, #root {
     margin: 0;
-    font-family:
-        -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-        "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-        sans-serif;
+    padding: 0;
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-family: 'Manrope', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-    font-family:
-        source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+h1, h2, h3, h4, h5, h6, .heading {
+    font-family: 'Outfit', system-ui, sans-serif;
+    letter-spacing: -0.02em;
 }
 
-@layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --chart-1: 12 76% 61%;
-        --chart-2: 173 58% 39%;
-        --chart-3: 197 37% 24%;
-        --chart-4: 43 74% 66%;
-        --chart-5: 27 87% 67%;
-        --radius: 0.5rem;
-    }
-    .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%;
-    }
+.font-heading { font-family: 'Outfit', system-ui, sans-serif; }
+.font-body { font-family: 'Manrope', system-ui, sans-serif; }
+
+/* Court styles */
+.vp-court {
+    background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 12px, transparent 12px 24px),
+        linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+    border: 2px solid #ffffff;
+    border-radius: 12px;
+    position: relative;
 }
 
-@layer base {
-    * {
-        @apply border-border;
-    }
-    body {
-        @apply bg-background text-foreground;
-    }
+.vp-court .net {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 4px;
+    background-image: repeating-linear-gradient(90deg, white 0 6px, transparent 6px 10px);
+    transform: translateY(-2px);
 }
 
-@layer base {
-    [data-debug-wrapper="true"] {
-        display: contents !important;
-    }
+.vp-court .three-meter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255,255,255,0.6);
+}
 
-    [data-debug-wrapper="true"] > * {
-        margin-left: inherit;
-        margin-right: inherit;
-        margin-top: inherit;
-        margin-bottom: inherit;
-        padding-left: inherit;
-        padding-right: inherit;
-        padding-top: inherit;
-        padding-bottom: inherit;
-        column-gap: inherit;
-        row-gap: inherit;
-        gap: inherit;
-        border-left-width: inherit;
-        border-right-width: inherit;
-        border-top-width: inherit;
-        border-bottom-width: inherit;
-        border-left-style: inherit;
-        border-right-style: inherit;
-        border-top-style: inherit;
-        border-bottom-style: inherit;
-        border-left-color: inherit;
-        border-right-color: inherit;
-        border-top-color: inherit;
-        border-bottom-color: inherit;
-    }
+.vp-position {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #EA580C;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.5rem;
+    border: 3px solid white;
+    cursor: grab;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 0.15s ease;
+    user-select: none;
+}
+
+.vp-position:hover { transform: translate(-50%, -50%) scale(1.05); }
+.vp-position.empty {
+    background: rgba(255,255,255,0.12);
+    border: 2px dashed rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.7);
+    font-size: 0.75rem;
+}
+
+/* Datavolley buttons */
+.dv-btn {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 1rem 0.5rem;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+}
+
+.dv-btn:active { transform: scale(0.97); }
+.dv-btn-kill { background: #16A34A; }
+.dv-btn-ace { background: #15803D; }
+.dv-btn-block { background: #2563EB; }
+.dv-btn-dig { background: #0891B2; }
+.dv-btn-perfect { background: #16A34A; }
+.dv-btn-medium { background: #EAB308; color: #1f2937; }
+.dv-btn-error { background: #DC2626; }
+.dv-btn-neutral { background: #475569; }
+
+/* Flash animation for stat updates */
+@keyframes flash-green {
+    0% { background-color: rgba(22, 163, 74, 0.4); }
+    100% { background-color: transparent; }
+}
+.flash { animation: flash-green 0.6s ease-out; }
+
+/* Side nav */
+.zentia-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 8px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.15s ease;
+    font-size: 0.95rem;
+}
+.zentia-nav-link:hover { background: #F1F5F9; color: #0F172A; }
+.zentia-nav-link.active {
+    background: linear-gradient(90deg, #FFEDD5 0%, #FFFFFF 100%);
+    color: #C2410C;
+    border-left: 3px solid #EA580C;
+    padding-left: calc(0.875rem - 3px);
+}
+
+/* Glass header */
+.zentia-header {
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom: 1px solid #E2E8F0;
+}
+
+.zentia-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+}
+
+/* Sport pattern */
+.sport-pattern {
+    background-image:
+        radial-gradient(circle at 20% 30%, rgba(234, 88, 12, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(30, 58, 138, 0.05) 0%, transparent 40%);
+}
+
+/* Hero */
+.hero-grid {
+    background-image:
+        linear-gradient(rgba(15,23,42,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px);
+    background-size: 56px 56px;
+}
+
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #475569;
+    background: white;
 }
