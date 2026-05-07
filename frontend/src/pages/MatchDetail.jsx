@@ -141,7 +141,12 @@ export default function MatchDetail() {
         <div className="flex items-center gap-3">
           <Link to="/matches"><Button variant="ghost" size="icon"><ArrowLeft size={20} /></Button></Link>
           <div>
-            <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Datavolley • Set {setNum}</div>
+            <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 flex items-center gap-2">
+              Datavolley • Set {setNum}
+              <span className={`text-[10px] uppercase tracking-widest font-bold px-1.5 py-0.5 rounded ${live ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                {live ? "● en vivo" : "○ offline"}
+              </span>
+            </div>
             <h2 className="font-heading text-2xl font-bold tracking-tight">{match.opponent}</h2>
           </div>
         </div>
