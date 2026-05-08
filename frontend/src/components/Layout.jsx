@@ -27,7 +27,7 @@ const NAV = [
   { to: "/communications", label: "Comunicación", icon: ChatsCircle, roles: ["head_coach", "assistant_coach", "player"] },
   { to: "/announcements", label: "Anuncios", icon: Megaphone, roles: ["head_coach", "assistant_coach", "player"] },
   { to: "/gallery", label: "Galería", icon: ImagesSquare, roles: ["head_coach", "assistant_coach", "player"] },
-  { to: "/analytics", label: "Analítica", icon: ChartBar, roles: ["head_coach", "assistant_coach"] },
+  { to: "/analytics", label: "Estadísticas", icon: ChartBar, roles: ["head_coach", "assistant_coach"] },
 ];
 
 export default function Layout() {
@@ -54,12 +54,12 @@ export default function Layout() {
 
   return (
     <TeamCtx.Provider value={{ teams, activeTeam, setActiveTeam, reloadTeams: loadTeams }}>
-      <div className="min-h-screen flex bg-slate-50">
+      <div className="min-h-screen flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-slate-200 bg-white flex flex-col sticky top-0 h-screen">
-          <div className="p-5 border-b border-slate-200">
+        <aside className="zentia-sidebar w-64 flex flex-col sticky top-0 h-screen z-10">
+          <div className="p-5 border-b border-white/40">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-lg bg-orange-500 text-white flex items-center justify-center">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shadow-lg shadow-orange-500/30">
                 <Volleyball size={22} weight="duotone" />
               </div>
               <div>
@@ -69,14 +69,14 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="p-4 border-b border-slate-200">
+          <div className="p-4 border-b border-white/40">
             <div className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-2">Equipo activo</div>
             <Select
               data-testid="team-selector"
               value={activeTeam?.team_id || ""}
               onValueChange={(v) => setActiveTeam(teams.find(t => t.team_id === v))}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full glass-soft border-white/60">
                 <SelectValue placeholder="Selecciona equipo" />
               </SelectTrigger>
               <SelectContent>
@@ -89,7 +89,7 @@ export default function Layout() {
               data-testid="new-team-btn"
               variant="outline"
               size="sm"
-              className="w-full mt-2 text-xs"
+              className="w-full mt-2 text-xs glass-soft border-white/60 hover:bg-white/80"
               onClick={() => navigate("/teams/new")}
             >
               + Nuevo equipo
@@ -113,7 +113,7 @@ export default function Layout() {
             })}
           </nav>
 
-          <div className="p-3 border-t border-slate-200">
+          <div className="p-3 border-t border-white/40">
             <div className="flex items-center gap-3 p-2">
               <Avatar className="w-9 h-9">
                 <AvatarImage src={user?.picture} />
@@ -140,12 +140,12 @@ export default function Layout() {
               <h1 className="font-heading text-xl font-bold tracking-tight">{activeTeam?.name || "Configura tu equipo"}</h1>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} data-testid="settings-btn">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} data-testid="settings-btn" className="hover:bg-white/60">
                 <GearSix size={20} />
               </Button>
             </div>
           </header>
-          <div className="p-6 sport-pattern flex-1">
+          <div className="p-6 flex-1">
             <Outlet />
           </div>
         </main>

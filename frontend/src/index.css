@@ -24,20 +24,29 @@
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: 21 90% 48%;
-    --radius: 0.5rem;
+    --radius: 0.875rem;
 }
 
-* {
-    border-color: hsl(var(--border));
-}
+* { border-color: hsl(var(--border)); }
 
 html, body, #root {
     margin: 0;
     padding: 0;
-    background-color: #F8FAFC;
     color: #0F172A;
     font-family: 'Manrope', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    background-color: #F1F5F9;
+}
+
+/* Subtle volleyball-themed page background that liquid glass surfaces sit on top of */
+body {
+    background-image:
+        radial-gradient(circle at 12% 8%, rgba(234, 88, 12, 0.18) 0%, transparent 38%),
+        radial-gradient(circle at 88% 18%, rgba(30, 58, 138, 0.18) 0%, transparent 42%),
+        radial-gradient(circle at 70% 92%, rgba(234, 88, 12, 0.10) 0%, transparent 45%),
+        radial-gradient(circle at 18% 88%, rgba(30, 58, 138, 0.10) 0%, transparent 45%),
+        linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
+    background-attachment: fixed;
 }
 
 h1, h2, h3, h4, h5, h6, .heading {
@@ -48,136 +57,301 @@ h1, h2, h3, h4, h5, h6, .heading {
 .font-heading { font-family: 'Outfit', system-ui, sans-serif; }
 .font-body { font-family: 'Manrope', system-ui, sans-serif; }
 
-/* Court styles */
+/* ============================================================
+   LIQUID GLASS DESIGN SYSTEM
+   ============================================================ */
+.glass {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.25),
+        0 8px 32px -8px rgba(15, 23, 42, 0.12),
+        0 2px 8px -2px rgba(15, 23, 42, 0.06);
+    border-radius: var(--radius);
+}
+
+.glass-strong {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(36px) saturate(200%);
+    -webkit-backdrop-filter: blur(36px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+        0 12px 40px -12px rgba(15, 23, 42, 0.14);
+    border-radius: var(--radius);
+}
+
+.glass-soft {
+    background: rgba(255, 255, 255, 0.40);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
+        0 4px 18px -6px rgba(15, 23, 42, 0.08);
+    border-radius: var(--radius);
+}
+
+/* All zentia-card uses now inherit glass appearance */
+.zentia-card {
+    background: rgba(255, 255, 255, 0.62);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: var(--radius);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.85),
+        0 6px 24px -6px rgba(15, 23, 42, 0.10);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.zentia-card.is-clickable { cursor: pointer; }
+.zentia-card.is-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+        0 12px 32px -8px rgba(15, 23, 42, 0.14);
+}
+
+/* Sidebar + header glass */
+.zentia-sidebar {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    border-right: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.6);
+}
+
+.zentia-header {
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(255, 255, 255, 0.55);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 16px -8px rgba(15, 23, 42, 0.08);
+}
+
+.zentia-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.875rem;
+    border-radius: 10px;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+}
+.zentia-nav-link:hover {
+    background: rgba(255, 255, 255, 0.7);
+    color: #0F172A;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+.zentia-nav-link.active {
+    background: linear-gradient(135deg, rgba(255, 237, 213, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    color: #C2410C;
+    border-color: rgba(234, 88, 12, 0.25);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+        0 2px 8px -2px rgba(234, 88, 12, 0.20);
+}
+
+/* ============================================================
+   VOLLEYBALL HALF COURT (FIVB-style, 9m x 9m + service zone)
+   ============================================================ */
+.half-court-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+}
+
+.vp-half-court {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1.15;  /* 9m playable + ~1m service zone */
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.55) 0 5%,
+            rgba(234, 88, 12, 0.18) 5% 7%,
+            rgba(255, 255, 255, 0.62) 7% 41%,
+            rgba(234, 88, 12, 0.10) 41% 43%,
+            rgba(255, 255, 255, 0.62) 43% 87%,
+            rgba(234, 88, 12, 0.18) 87% 89%,
+            rgba(255, 255, 255, 0.40) 89% 100%);
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
+        0 8px 32px -8px rgba(30, 58, 138, 0.18);
+}
+
+.vp-half-court::before {
+    /* hardwood texture */
+    content: "";
+    position: absolute; inset: 0;
+    background:
+        repeating-linear-gradient(90deg, rgba(15, 23, 42, 0.02) 0 1px, transparent 1px 14px),
+        repeating-linear-gradient(0deg, rgba(15, 23, 42, 0.025) 0 1px, transparent 1px 36px);
+    pointer-events: none;
+}
+
+/* The lines drawn over the court */
+.vp-half-court .line { position: absolute; background: rgba(255, 255, 255, 0.95); pointer-events: none; }
+/* Net (top edge) */
+.vp-half-court .line-net { top: 4%; left: 2%; right: 2%; height: 4px; border-radius: 4px;
+    background-image: repeating-linear-gradient(90deg, white 0 8px, rgba(255,255,255,0.4) 8px 12px); }
+/* Attack line at 3m (35% from net) */
+.vp-half-court .line-attack { top: 42%; left: 6%; right: 6%; height: 2px; }
+/* End line at 9m (87%) */
+.vp-half-court .line-end { top: 88%; left: 6%; right: 6%; height: 2px; }
+/* Side lines */
+.vp-half-court .line-left { top: 5%; bottom: 11%; left: 6%; width: 2px; }
+.vp-half-court .line-right { top: 5%; bottom: 11%; right: 6%; width: 2px; }
+/* Center axis (light) */
+.vp-half-court .line-axis { top: 5%; bottom: 11%; left: 50%; width: 1px; background: rgba(255,255,255,0.35); }
+
+.vp-half-court .court-label {
+    position: absolute;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(15, 23, 42, 0.45);
+    pointer-events: none;
+}
+.vp-half-court .label-net { top: 1%; left: 50%; transform: translateX(-50%); color: rgba(234, 88, 12, 0.85); }
+.vp-half-court .label-attack { top: 23%; right: 8%; }
+.vp-half-court .label-back { top: 65%; right: 8%; }
+.vp-half-court .label-service { bottom: 4%; left: 50%; transform: translateX(-50%); }
+
+.vp-spot {
+    position: absolute;
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: white;
+    background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+    border: 3px solid rgba(255, 255, 255, 0.95);
+    transform: translate(-50%, -50%);
+    cursor: grab;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 6px 20px -4px rgba(234, 88, 12, 0.55),
+        0 2px 6px rgba(0, 0, 0, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+.vp-spot:hover { transform: translate(-50%, -50%) scale(1.06); }
+.vp-spot.empty {
+    background: rgba(255, 255, 255, 0.55);
+    color: rgba(15, 23, 42, 0.45);
+    border: 2px dashed rgba(15, 23, 42, 0.25);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+}
+
+/* Legacy small dashboard mini-court (kept for hero) */
 .vp-court {
     background:
         repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0 12px, transparent 12px 24px),
         linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
     border: 2px solid #ffffff;
-    border-radius: 12px;
+    border-radius: 14px;
     position: relative;
+    box-shadow: 0 8px 32px -8px rgba(30, 58, 138, 0.4);
 }
-
 .vp-court .net {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
+    position: absolute; left: 0; right: 0; top: 50%;
     height: 4px;
     background-image: repeating-linear-gradient(90deg, white 0 6px, transparent 6px 10px);
     transform: translateY(-2px);
 }
-
-.vp-court .three-meter {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: rgba(255,255,255,0.6);
-}
-
 .vp-position {
     position: absolute;
-    width: 64px;
-    height: 64px;
+    width: 64px; height: 64px;
     border-radius: 50%;
     background: #EA580C;
     color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
     font-size: 1.5rem;
     border: 3px solid white;
-    cursor: grab;
     transform: translate(-50%, -50%);
     box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    transition: transform 0.15s ease;
-    user-select: none;
 }
 
-.vp-position:hover { transform: translate(-50%, -50%) scale(1.05); }
-.vp-position.empty {
-    background: rgba(255,255,255,0.12);
-    border: 2px dashed rgba(255,255,255,0.6);
-    color: rgba(255,255,255,0.7);
-    font-size: 0.75rem;
-}
-
-/* Datavolley buttons */
+/* ============================================================
+   DATAVOLLEY BUTTONS
+   ============================================================ */
 .dv-btn {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
-    border-radius: 10px;
-    padding: 1rem 0.5rem;
+    border-radius: 12px;
+    padding: 0.875rem 0.5rem;
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     cursor: pointer;
     transition: transform 0.1s ease, box-shadow 0.15s ease;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 4px 12px -4px rgba(15, 23, 42, 0.20);
 }
+.dv-btn:active { transform: scale(0.96); }
+.dv-btn-kill { background: linear-gradient(180deg, #22C55E 0%, #16A34A 100%); }
+.dv-btn-ace { background: linear-gradient(180deg, #16A34A 0%, #15803D 100%); }
+.dv-btn-block { background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%); }
+.dv-btn-dig { background: linear-gradient(180deg, #06B6D4 0%, #0891B2 100%); }
+.dv-btn-perfect { background: linear-gradient(180deg, #22C55E 0%, #16A34A 100%); }
+.dv-btn-medium { background: linear-gradient(180deg, #FBBF24 0%, #EAB308 100%); color: #1f2937; }
+.dv-btn-error { background: linear-gradient(180deg, #EF4444 0%, #DC2626 100%); }
+.dv-btn-neutral { background: linear-gradient(180deg, #64748B 0%, #475569 100%); }
 
-.dv-btn:active { transform: scale(0.97); }
-.dv-btn-kill { background: #16A34A; }
-.dv-btn-ace { background: #15803D; }
-.dv-btn-block { background: #2563EB; }
-.dv-btn-dig { background: #0891B2; }
-.dv-btn-perfect { background: #16A34A; }
-.dv-btn-medium { background: #EAB308; color: #1f2937; }
-.dv-btn-error { background: #DC2626; }
-.dv-btn-neutral { background: #475569; }
-
-/* Flash animation for stat updates */
 @keyframes flash-green {
     0% { background-color: rgba(22, 163, 74, 0.4); }
     100% { background-color: transparent; }
 }
 .flash { animation: flash-green 0.6s ease-out; }
 
-/* Side nav */
-.zentia-nav-link {
-    display: flex;
+/* ============================================================
+   TAGS & MISC
+   ============================================================ */
+.tag-chip {
+    display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.625rem 0.875rem;
-    border-radius: 8px;
-    font-weight: 500;
+    gap: 0.4rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
     color: #475569;
-    transition: all 0.15s ease;
-    font-size: 0.95rem;
-}
-.zentia-nav-link:hover { background: #F1F5F9; color: #0F172A; }
-.zentia-nav-link.active {
-    background: linear-gradient(90deg, #FFEDD5 0%, #FFFFFF 100%);
-    color: #C2410C;
-    border-left: 3px solid #EA580C;
-    padding-left: calc(0.875rem - 3px);
-}
-
-/* Glass header */
-.zentia-header {
+    background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
-    background: rgba(255, 255, 255, 0.85);
-    border-bottom: 1px solid #E2E8F0;
 }
 
-.zentia-card {
-    background: #FFFFFF;
-    border: 1px solid #E2E8F0;
-    border-radius: 12px;
-}
-
-/* Sport pattern */
+/* hero/gradient pattern */
 .sport-pattern {
     background-image:
-        radial-gradient(circle at 20% 30%, rgba(234, 88, 12, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 80% 70%, rgba(30, 58, 138, 0.05) 0%, transparent 40%);
+        radial-gradient(circle at 20% 30%, rgba(234, 88, 12, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(30, 58, 138, 0.04) 0%, transparent 40%);
 }
 
-/* Hero */
 .hero-grid {
     background-image:
         linear-gradient(rgba(15,23,42,0.04) 1px, transparent 1px),
@@ -185,17 +359,38 @@ h1, h2, h3, h4, h5, h6, .heading {
     background-size: 56px 56px;
 }
 
-.tag-chip {
-    display: inline-flex;
-    align-items: center;
+/* Weekly Planner */
+.planner-day {
+    border-radius: 14px;
+    padding: 0.75rem 0.5rem;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(16px);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    min-height: 96px;
+    display: flex;
+    flex-direction: column;
     gap: 0.4rem;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid #E2E8F0;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #475569;
-    background: white;
 }
+.planner-day:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.78); }
+.planner-day.is-today {
+    background: linear-gradient(160deg, rgba(255, 237, 213, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%);
+    border-color: rgba(234, 88, 12, 0.35);
+    color: #C2410C;
+}
+.planner-day.is-selected {
+    border-color: #EA580C;
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25), inset 0 1px 0 rgba(255,255,255,0.7);
+}
+
+.event-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 3px;
+}
+.event-dot.match { background: #EA580C; }
+.event-dot.training { background: #1E3A8A; }

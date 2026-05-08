@@ -4,21 +4,23 @@ import { useTeam } from "../components/Layout";
 import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { FloppyDisk, Trash, ArrowsClockwise } from "@phosphor-icons/react";
 
-// Volleyball court rotation positions (top half = our side)
-// Position numbers from coach's perspective:
-// Back row: P5 (left back), P6 (mid back), P1 (right back / server)
-// Front row: P4 (left front), P3 (mid front), P2 (right front)
+// FIVB half court — 9m × 9m playable + service zone
+// Coordinates are % within .vp-half-court (which spans 0–100% horizontally,
+// playable area roughly 5%–88% vertically with the net at the top edge)
+//
+// Position numbering (coach view from behind back line, looking towards net):
+//   Front row (closer to net):  P4 (left)   P3 (center)  P2 (right)
+//   Back row  (closer to back): P5 (left)   P6 (center)  P1 (right)
 const COURT_SLOTS = [
-  { id: "P4", label: "P4", x: 22, y: 32 },
-  { id: "P3", label: "P3", x: 50, y: 32 },
-  { id: "P2", label: "P2", x: 78, y: 32 },
-  { id: "P5", label: "P5", x: 22, y: 75 },
-  { id: "P6", label: "P6", x: 50, y: 75 },
-  { id: "P1", label: "P1", x: 78, y: 75 },
+  { id: "P4", label: "P4", x: 22, y: 23 },
+  { id: "P3", label: "P3", x: 50, y: 23 },
+  { id: "P2", label: "P2", x: 78, y: 23 },
+  { id: "P5", label: "P5", x: 22, y: 65 },
+  { id: "P6", label: "P6", x: 50, y: 65 },
+  { id: "P1", label: "P1", x: 78, y: 65 },
 ];
 
 export default function Lineup() {
@@ -26,7 +28,7 @@ export default function Lineup() {
   const [players, setPlayers] = useState([]);
   const [lineups, setLineups] = useState([]);
   const [name, setName] = useState("Sexteto inicial");
-  const [positions, setPositions] = useState({}); // {P1: player_id, ...}
+  const [positions, setPositions] = useState({});
   const dragId = useRef(null);
 
   const load = async () => {
@@ -46,7 +48,6 @@ export default function Lineup() {
   const onSlotDrop = (slot) => {
     if (!dragId.current) return;
     const next = { ...positions };
-    // Remove from any other slot
     Object.keys(next).forEach(k => { if (next[k] === dragId.current) delete next[k]; });
     next[slot] = dragId.current;
     setPositions(next);
@@ -91,48 +92,67 @@ export default function Lineup() {
           <h2 className="font-heading text-3xl font-bold tracking-tight">Alineaciones</h2>
           <p className="text-slate-500 text-sm">Arrastra jugadores a las posiciones del sexteto inicial.</p>
         </div>
-        <div className="flex gap-2 items-center">
-          <Input data-testid="lineup-name-input" className="w-56" value={name} onChange={e => setName(e.target.value)} />
+        <div className="flex gap-2 items-center flex-wrap">
+          <Input data-testid="lineup-name-input" className="w-56 glass-soft border-white/60" value={name} onChange={e => setName(e.target.value)} />
           <Button data-testid="save-lineup-btn" onClick={save} className="bg-orange-600 hover:bg-orange-700 gap-2">
             <FloppyDisk size={18} weight="bold" /> Guardar
           </Button>
-          <Button variant="outline" onClick={() => setPositions({})} className="gap-2"><ArrowsClockwise size={16} /> Limpiar</Button>
+          <Button variant="outline" onClick={() => setPositions({})} className="gap-2 glass-soft border-white/60"><ArrowsClockwise size={16} /> Limpiar</Button>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
-          <Card className="zentia-card p-6 shadow-none">
-            <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">Pista (vista entrenador)</div>
-            <div className="vp-court mx-auto" style={{ aspectRatio: "1.6 / 1", maxWidth: "640px" }}
-              data-testid="volleyball-court">
-              <div className="three-meter" style={{ top: "50%" }} />
-              <div className="net" />
-              {COURT_SLOTS.map(slot => {
-                const pid = positions[slot.id];
-                const player = playerById(pid);
-                return (
-                  <div
-                    key={slot.id}
-                    onDragOver={e => e.preventDefault()}
-                    onDrop={() => onSlotDrop(slot.id)}
-                    onClick={() => player && removeSlot(slot.id)}
-                    data-testid={`court-slot-${slot.id}`}
-                    className={`vp-position ${player ? "" : "empty"}`}
-                    style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
-                    title={player ? `${player.name} (#${player.number})` : `${slot.label} - vacío`}
-                  >
-                    {player ? player.number : slot.label}
-                  </div>
-                );
-              })}
+          <Card className="zentia-card p-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Pista (vista entrenador)</div>
+              <div className="text-[10px] uppercase font-bold tracking-widest text-orange-600">Media pista — 9m × 9m</div>
             </div>
-            <div className="text-xs text-slate-500 mt-3 text-center">Click en una posición ocupada para liberarla</div>
+            <div className="half-court-wrap">
+              <div className="vp-half-court" data-testid="volleyball-court">
+                {/* Court lines */}
+                <div className="line line-net" />
+                <div className="line line-attack" />
+                <div className="line line-end" />
+                <div className="line line-left" />
+                <div className="line line-right" />
+                <div className="line line-axis" />
+
+                {/* Court labels */}
+                <span className="court-label label-net">Red</span>
+                <span className="court-label label-attack">3 m</span>
+                <span className="court-label label-back">9 m</span>
+                <span className="court-label label-service">Zona de saque</span>
+
+                {/* 6 positions */}
+                {COURT_SLOTS.map(slot => {
+                  const pid = positions[slot.id];
+                  const player = playerById(pid);
+                  return (
+                    <div
+                      key={slot.id}
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={() => onSlotDrop(slot.id)}
+                      onClick={() => player && removeSlot(slot.id)}
+                      data-testid={`court-slot-${slot.id}`}
+                      className={`vp-spot ${player ? "" : "empty"}`}
+                      style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
+                      title={player ? `${player.name} (#${player.number})` : `${slot.label} - vacío`}
+                    >
+                      {player ? player.number : slot.label}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="text-xs text-slate-500 mt-4 text-center">
+              Arrastra desde el banquillo a una posición. Click en una posición ocupada para liberarla.
+            </div>
           </Card>
         </div>
 
         <div className="space-y-4">
-          <Card className="zentia-card p-4 shadow-none">
+          <Card className="zentia-card p-4">
             <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">Banquillo</div>
             <div className="space-y-1 max-h-[300px] overflow-y-auto">
               {players.length === 0 && <p className="text-slate-500 text-sm">Añade jugadores en Plantilla.</p>}
@@ -144,9 +164,9 @@ export default function Lineup() {
                     draggable
                     onDragStart={() => (dragId.current = p.player_id)}
                     data-testid={`bench-player-${p.player_id}`}
-                    className={`flex items-center gap-2 p-2 rounded-md cursor-grab border ${placed ? "bg-orange-50 border-orange-200 opacity-50" : "border-slate-200 hover:bg-slate-50"}`}
+                    className={`flex items-center gap-2 p-2 rounded-lg cursor-grab border ${placed ? "bg-orange-50/80 border-orange-200/70 opacity-50" : "border-white/60 hover:bg-white/70 glass-soft"}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-orange-500 text-white flex items-center justify-center font-heading font-bold text-sm">{p.number}</div>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center font-heading font-bold text-sm">{p.number}</div>
                     <div className="flex-1 min-w-0 text-sm">
                       <div className="font-semibold truncate">{p.name}</div>
                       <div className="text-xs text-slate-500">{p.position}</div>
@@ -157,12 +177,12 @@ export default function Lineup() {
             </div>
           </Card>
 
-          <Card className="zentia-card p-4 shadow-none">
+          <Card className="zentia-card p-4">
             <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">Alineaciones guardadas</div>
             {lineups.length === 0 ? <p className="text-slate-500 text-sm">Aún no hay alineaciones.</p> :
               <div className="space-y-1">
                 {lineups.map(l => (
-                  <div key={l.lineup_id} className="flex items-center justify-between p-2 rounded hover:bg-slate-50">
+                  <div key={l.lineup_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-white/60">
                     <button onClick={() => loadLineup(l)} className="text-sm font-semibold text-left flex-1">{l.name}</button>
                     <button onClick={() => del(l.lineup_id)} className="text-slate-400 hover:text-red-600"><Trash size={14} /></button>
                   </div>

@@ -21,6 +21,7 @@ import Announcements from "./pages/Announcements";
 import Attendance from "./pages/Attendance";
 import Gallery from "./pages/Gallery";
 import Analytics from "./pages/Analytics";
+import Settings from "./pages/Settings";
 
 const Protected = ({ children }) => {
   const { user, loading } = useAuth();
@@ -55,7 +56,7 @@ function Router() {
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/analytics" element={<Analytics />} />
-        <Route path="/settings" element={<div className="p-6">Próximamente</div>} />
+        <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

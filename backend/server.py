@@ -418,6 +418,44 @@ async def invite_member(team_id: str, body: Dict[str, str], user=Depends(current
     return {"ok": True, "user": invited}
 
 
+@api.patch("/teams/{team_id}")
+async def update_team(team_id: str, payload: TeamIn, user=Depends(current_user)):
+    team = await require_team_member(team_id, user)
+    if user["user_id"] != team.get("owner_id"):
+        raise HTTPException(403, "Only the team owner can edit")
+    update = {k: v for k, v in payload.model_dump().items() if v is not None}
+    await db.teams.update_one({"team_id": team_id}, {"$set": update})
+    return await db.teams.find_one({"team_id": team_id}, {"_id": 0})
+
+
+@api.delete("/teams/{team_id}")
+async def delete_team(team_id: str, user=Depends(current_user)):
+    team = await db.teams.find_one({"team_id": team_id})
+    if not team:
+        raise HTTPException(404, "Team not found")
+    if user["user_id"] != team.get("owner_id"):
+        raise HTTPException(403, "Only the team owner can delete")
+    # cascade
+    await db.teams.delete_one({"team_id": team_id})
+    await db.players.delete_many({"team_id": team_id})
+    matches = await db.matches.find({"team_id": team_id}, {"_id": 0, "match_id": 1}).to_list(2000)
+    match_ids = [m["match_id"] for m in matches]
+    if match_ids:
+        await db.stats.delete_many({"match_id": {"$in": match_ids}})
+    await db.matches.delete_many({"team_id": team_id})
+    await db.lineups.delete_many({"team_id": team_id})
+    trainings = await db.trainings.find({"team_id": team_id}, {"_id": 0, "training_id": 1}).to_list(2000)
+    training_ids = [t["training_id"] for t in trainings]
+    if training_ids:
+        await db.attendance.delete_many({"training_id": {"$in": training_ids}})
+    await db.trainings.delete_many({"team_id": team_id})
+    await db.announcements.delete_many({"team_id": team_id})
+    await db.messages.delete_many({"team_id": team_id})
+    await db.gallery.delete_many({"team_id": team_id})
+    await db.users.update_many({}, {"$pull": {"team_ids": team_id}})
+    return {"ok": True}
+
+
 # ---------- Players ----------
 @api.post("/players")
 async def create_player(payload: PlayerIn, user=Depends(current_user)):
