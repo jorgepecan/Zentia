@@ -603,6 +603,78 @@ async def stats_summary(match_id: str, user=Depends(current_user)):
     return await _compute_summary(match_id)
 
 
+@api.get("/stats/team-summary")
+async def stats_team_summary(team_id: str, user=Depends(current_user)):
+    await require_team_member(team_id, user)
+    matches = await db.matches.find({"team_id": team_id}, {"_id": 0, "match_id": 1}).to_list(2000)
+    match_ids = [m["match_id"] for m in matches]
+    if not match_ids:
+        return {}
+    stats = await db.stats.find({"match_id": {"$in": match_ids}}, {"_id": 0}).to_list(50000)
+    summary: Dict[str, Dict[str, Any]] = {}
+    matches_played: Dict[str, set] = {}
+    for s in stats:
+        pid = s["player_id"]
+        if pid not in summary:
+            summary[pid] = {
+                "matches_played": 0, "total": 0,
+                "attacks": 0, "kills": 0, "atk_errors": 0,
+                "serves": 0, "aces": 0, "serve_errors": 0,
+                "blocks": 0, "block_errors": 0,
+                "digs": 0,
+                "receptions": 0, "rec_excellent": 0, "rec_perfect": 0, "rec_ok": 0, "rec_errors": 0,
+                "sets": 0, "set_errors": 0,
+                "errors": 0,
+            }
+            matches_played[pid] = set()
+        matches_played[pid].add(s["match_id"])
+        a, q = s.get("action"), s.get("quality")
+        bucket = summary[pid]
+        bucket["total"] += 1
+        if a == "attack":
+            bucket["attacks"] += 1
+            if q == "kill":
+                bucket["kills"] += 1
+            elif q == "error":
+                bucket["atk_errors"] += 1
+        elif a == "serve":
+            bucket["serves"] += 1
+            if q == "ace":
+                bucket["aces"] += 1
+            elif q == "error":
+                bucket["serve_errors"] += 1
+        elif a == "block":
+            if q in ("kill", "perfect"):
+                bucket["blocks"] += 1
+            elif q == "error":
+                bucket["block_errors"] += 1
+        elif a == "dig" and q == "perfect":
+            bucket["digs"] += 1
+        elif a == "reception":
+            bucket["receptions"] += 1
+            if q == "kill":
+                bucket["rec_excellent"] += 1
+            elif q == "perfect":
+                bucket["rec_perfect"] += 1
+            elif q == "medium":
+                bucket["rec_ok"] += 1
+            elif q == "error":
+                bucket["rec_errors"] += 1
+        elif a == "set":
+            bucket["sets"] += 1
+            if q == "error":
+                bucket["set_errors"] += 1
+        if q == "error":
+            bucket["errors"] += 1
+    for pid, s in summary.items():
+        s["matches_played"] = len(matches_played[pid])
+        rec = s["receptions"]
+        s["reception_pct"] = round(((s["rec_excellent"] + s["rec_perfect"]) / rec) * 100, 1) if rec else 0.0
+        atk = s["attacks"]
+        s["attack_pct"] = round(((s["kills"] - s["atk_errors"]) / atk) * 100, 1) if atk else 0.0
+    return summary
+
+
 # ---------- Lineups ----------
 @api.post("/lineups")
 async def create_lineup(payload: LineupIn, user=Depends(current_user)):

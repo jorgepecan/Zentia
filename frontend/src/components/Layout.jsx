@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
   House, UsersThree, ChartBar, CalendarBlank, Megaphone,
   Strategy, ImagesSquare, SignOut, Volleyball, GearSix,
-  Trophy, ClipboardText, ChatsCircle
+  Trophy, ClipboardText, ChatsCircle, Table
 } from "@phosphor-icons/react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
@@ -28,6 +28,7 @@ const NAV = [
   { to: "/announcements", label: "Anuncios", icon: Megaphone, roles: ["head_coach", "assistant_coach", "player"] },
   { to: "/gallery", label: "Galería", icon: ImagesSquare, roles: ["head_coach", "assistant_coach", "player"] },
   { to: "/analytics", label: "Estadísticas", icon: ChartBar, roles: ["head_coach", "assistant_coach"] },
+  { to: "/summaries", label: "Resúmenes data", icon: Table, roles: ["head_coach", "assistant_coach", "player"] },
 ];
 
 export default function Layout() {

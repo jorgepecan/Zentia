@@ -5,15 +5,9 @@ import { Card } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { toast } from "sonner";
-import { FloppyDisk, Trash, ArrowsClockwise } from "@phosphor-icons/react";
+import { FloppyDisk, Trash, ArrowsClockwise, ArrowClockwise, ArrowCounterClockwise } from "@phosphor-icons/react";
 
-// FIVB half court — 9m × 9m playable + service zone
-// Coordinates are % within .vp-half-court (which spans 0–100% horizontally,
-// playable area roughly 5%–88% vertically with the net at the top edge)
-//
-// Position numbering (coach view from behind back line, looking towards net):
-//   Front row (closer to net):  P4 (left)   P3 (center)  P2 (right)
-//   Back row  (closer to back): P5 (left)   P6 (center)  P1 (right)
+// Half-court positions (top down view; net at top)
 const COURT_SLOTS = [
   { id: "P4", label: "P4", x: 22, y: 23 },
   { id: "P3", label: "P3", x: 50, y: 23 },
@@ -23,12 +17,37 @@ const COURT_SLOTS = [
   { id: "P1", label: "P1", x: 78, y: 65 },
 ];
 
+// Standard volleyball clockwise rotation:
+// On winning a sideout the team rotates: P2→P1, P3→P2, P4→P3, P5→P4, P6→P5, P1→P6
+// i.e. the player at P2 moves to slot P1, etc.
+const rotateRight = (pos) => ({
+  P1: pos.P2 || null,
+  P2: pos.P3 || null,
+  P3: pos.P4 || null,
+  P4: pos.P5 || null,
+  P5: pos.P6 || null,
+  P6: pos.P1 || null,
+});
+
+// Counter-clockwise (undo rotation)
+const rotateLeft = (pos) => ({
+  P1: pos.P6 || null,
+  P2: pos.P1 || null,
+  P3: pos.P2 || null,
+  P4: pos.P3 || null,
+  P5: pos.P4 || null,
+  P6: pos.P5 || null,
+});
+
+const cleanPositions = (p) => Object.fromEntries(Object.entries(p).filter(([, v]) => v != null));
+
 export default function Lineup() {
   const { activeTeam } = useTeam() || {};
   const [players, setPlayers] = useState([]);
   const [lineups, setLineups] = useState([]);
   const [name, setName] = useState("Sexteto inicial");
   const [positions, setPositions] = useState({});
+  const [animating, setAnimating] = useState(false);
   const dragId = useRef(null);
 
   const load = async () => {
@@ -58,6 +77,18 @@ export default function Lineup() {
     const next = { ...positions };
     delete next[slot];
     setPositions(next);
+  };
+
+  const rotate = (direction) => {
+    if (Object.keys(positions).length === 0) {
+      toast.error("Coloca jugadores en pista para rotar");
+      return;
+    }
+    setAnimating(true);
+    const next = direction === "right" ? rotateRight(positions) : rotateLeft(positions);
+    setPositions(cleanPositions(next));
+    toast.success(direction === "right" ? "Rotación →" : "Rotación ←");
+    setTimeout(() => setAnimating(false), 500);
   };
 
   const save = async () => {
@@ -90,27 +121,52 @@ export default function Lineup() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="font-heading text-3xl font-bold tracking-tight">Alineaciones</h2>
-          <p className="text-slate-500 text-sm">Arrastra jugadores a las posiciones del sexteto inicial.</p>
+          <p className="text-slate-500 text-sm">Arrastra jugadores a las posiciones del sexteto inicial. Usa las flechas para rotar.</p>
         </div>
         <div className="flex gap-2 items-center flex-wrap">
           <Input data-testid="lineup-name-input" className="w-56 glass-soft border-white/60" value={name} onChange={e => setName(e.target.value)} />
           <Button data-testid="save-lineup-btn" onClick={save} className="bg-orange-600 hover:bg-orange-700 gap-2">
             <FloppyDisk size={18} weight="bold" /> Guardar
           </Button>
-          <Button variant="outline" onClick={() => setPositions({})} className="gap-2 glass-soft border-white/60"><ArrowsClockwise size={16} /> Limpiar</Button>
+          <Button variant="outline" onClick={() => setPositions({})} className="gap-2 glass-soft border-white/60">
+            <ArrowsClockwise size={16} /> Limpiar
+          </Button>
         </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2">
           <Card className="zentia-card p-6">
-            <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
               <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Pista (vista entrenador)</div>
               <div className="text-[10px] uppercase font-bold tracking-widest text-orange-600">Media pista — 9m × 9m</div>
             </div>
+
+            {/* Rotation controls */}
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Button
+                variant="outline"
+                onClick={() => rotate("left")}
+                data-testid="rotate-left-btn"
+                disabled={animating}
+                className="gap-2 glass-soft border-white/60 hover:bg-white/80"
+              >
+                <ArrowCounterClockwise size={18} weight="bold" /> Rotar izquierda
+              </Button>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Rotación</span>
+              <Button
+                variant="outline"
+                onClick={() => rotate("right")}
+                data-testid="rotate-right-btn"
+                disabled={animating}
+                className="gap-2 glass-soft border-white/60 hover:bg-white/80"
+              >
+                Rotar derecha <ArrowClockwise size={18} weight="bold" />
+              </Button>
+            </div>
+
             <div className="half-court-wrap">
               <div className="vp-half-court" data-testid="volleyball-court">
-                {/* Court lines */}
                 <div className="line line-net" />
                 <div className="line line-attack" />
                 <div className="line line-end" />
@@ -118,13 +174,11 @@ export default function Lineup() {
                 <div className="line line-right" />
                 <div className="line line-axis" />
 
-                {/* Court labels */}
                 <span className="court-label label-net">Red</span>
                 <span className="court-label label-attack">3 m</span>
                 <span className="court-label label-back">9 m</span>
                 <span className="court-label label-service">Zona de saque</span>
 
-                {/* 6 positions */}
                 {COURT_SLOTS.map(slot => {
                   const pid = positions[slot.id];
                   const player = playerById(pid);
@@ -146,7 +200,7 @@ export default function Lineup() {
               </div>
             </div>
             <div className="text-xs text-slate-500 mt-4 text-center">
-              Arrastra desde el banquillo a una posición. Click en una posición ocupada para liberarla.
+              Arrastra desde el banquillo. Click en una posición ocupada para liberarla.
             </div>
           </Card>
         </div>
@@ -154,7 +208,7 @@ export default function Lineup() {
         <div className="space-y-4">
           <Card className="zentia-card p-4">
             <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500 mb-2">Banquillo</div>
-            <div className="space-y-1 max-h-[300px] overflow-y-auto">
+            <div className="space-y-1 max-h-[320px] overflow-y-auto">
               {players.length === 0 && <p className="text-slate-500 text-sm">Añade jugadores en Plantilla.</p>}
               {players.map(p => {
                 const placed = placedIds.includes(p.player_id);

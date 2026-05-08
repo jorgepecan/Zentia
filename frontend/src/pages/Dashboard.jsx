@@ -8,6 +8,9 @@ import { Label } from "../components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from "../components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "../components/ui/select";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -34,12 +37,11 @@ const StatCard = ({ label, value, icon: Icon, accent = "orange", onClick, testId
   </Card>
 );
 
-// ------ Weekly Planner ------
 const DAY_LABELS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function startOfWeek(d) {
   const date = new Date(d);
-  const day = (date.getDay() + 6) % 7; // monday=0
+  const day = (date.getDay() + 6) % 7;
   date.setDate(date.getDate() - day);
   date.setHours(0, 0, 0, 0);
   return date;
@@ -49,12 +51,16 @@ function sameDay(a, b) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
 function WeeklyPlanner({ teamId, matches, trainings, onChanged }) {
   const navigate = useNavigate();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const [selected, setSelected] = useState(null);
-  const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ title: "Entrenamiento", time: "18:00", location: "" });
+  const [dialog, setDialog] = useState(null); // { date }
+  const [form, setForm] = useState({ kind: "training", title: "Entrenamiento", time: "18:00", location: "", opponent: "", home: true });
 
   const days = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => {
@@ -80,6 +86,7 @@ function WeeklyPlanner({ teamId, matches, trainings, onChanged }) {
       const k = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toDateString();
       if (k in evMap) evMap[k].push({ kind: "training", id: t.training_id, date: t.date, title: t.title, location: t.location });
     });
+    Object.values(evMap).forEach(list => list.sort((a, b) => new Date(a.date) - new Date(b.date)));
     return evMap;
   }, [days, matches, trainings]);
 
@@ -90,27 +97,46 @@ function WeeklyPlanner({ teamId, matches, trainings, onChanged }) {
     setSelected(null);
   };
 
-  const selectedEvents = selected ? (events[selected.toDateString()] || []) : [];
+  const openDialog = (date, e) => {
+    if (e) e.stopPropagation();
+    setDialog({ date });
+    setForm({ kind: "training", title: "Entrenamiento", time: "18:00", location: "", opponent: "", home: true });
+  };
 
-  const createTraining = async (e) => {
+  const submitEvent = async (e) => {
     e.preventDefault();
-    if (!selected) return;
-    const [h, m] = (form.time || "18:00").split(":");
-    const dt = new Date(selected);
-    dt.setHours(Number(h) || 18, Number(m) || 0, 0, 0);
+    const d = new Date(dialog.date);
+    const [hh, mm] = (form.time || "18:00").split(":");
+    d.setHours(Number(hh) || 18, Number(mm) || 0, 0, 0);
     try {
-      await api.post("/trainings", {
-        team_id: teamId,
-        title: form.title,
-        date: dt.toISOString(),
-        location: form.location,
-        notes: "",
-      });
-      toast.success("Entrenamiento añadido");
-      setCreating(false);
-      setForm({ title: "Entrenamiento", time: "18:00", location: "" });
+      if (form.kind === "training") {
+        await api.post("/trainings", {
+          team_id: teamId,
+          title: form.title || "Entrenamiento",
+          date: d.toISOString(),
+          location: form.location,
+          notes: "",
+        });
+        toast.success("Entrenamiento añadido");
+      } else {
+        if (!form.opponent.trim()) {
+          toast.error("Indica el rival");
+          return;
+        }
+        await api.post("/matches", {
+          team_id: teamId,
+          opponent: form.opponent.trim(),
+          date: d.toISOString(),
+          location: form.location,
+          home: form.home,
+        });
+        toast.success("Partido añadido");
+      }
+      setDialog(null);
       onChanged?.();
-    } catch (err) { toast.error(formatErr(err)); }
+    } catch (err) {
+      toast.error(formatErr(err));
+    }
   };
 
   const weekLabel = `${weekStart.toLocaleDateString("es-ES", { day: "numeric", month: "short" })} – ${days[6].toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`;
@@ -122,7 +148,7 @@ function WeeklyPlanner({ teamId, matches, trainings, onChanged }) {
           <div className="text-[10px] uppercase tracking-widest font-bold text-slate-500">Planificador semanal</div>
           <h3 className="font-heading text-lg font-bold tracking-tight">{weekLabel}</h3>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button data-testid="planner-prev" variant="outline" size="icon" className="glass-soft border-white/60" onClick={() => moveWeek(-1)}>
             <CaretLeft size={16} weight="bold" />
           </Button>
@@ -130,85 +156,116 @@ function WeeklyPlanner({ teamId, matches, trainings, onChanged }) {
           <Button data-testid="planner-next" variant="outline" size="icon" className="glass-soft border-white/60" onClick={() => moveWeek(1)}>
             <CaretRight size={16} weight="bold" />
           </Button>
+          <Button
+            data-testid="planner-add-event"
+            onClick={() => openDialog(selected || today)}
+            className="bg-orange-600 hover:bg-orange-700 gap-1.5"
+          >
+            <Plus size={16} weight="bold" /> Añadir evento
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
         {days.map((d, i) => {
           const evs = events[d.toDateString()] || [];
           const isToday = sameDay(d, today);
           const isSelected = selected && sameDay(selected, d);
           return (
-            <button
+            <div
               key={i}
               data-testid={`planner-day-${i}`}
               onClick={() => setSelected(d)}
               className={`planner-day ${isToday ? "is-today" : ""} ${isSelected ? "is-selected" : ""}`}
             >
-              <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">{DAY_LABELS[i]}</div>
-              <div className="font-heading text-2xl font-extrabold leading-none">{d.getDate()}</div>
-              <div className="flex items-center justify-center gap-0.5 flex-wrap min-h-[10px]">
-                {evs.slice(0, 3).map((e, j) => <span key={j} className={`event-dot ${e.kind}`} />)}
-                {evs.length > 3 && <span className="text-[9px] font-bold text-slate-500">+{evs.length - 3}</span>}
+              <span
+                role="button"
+                aria-label="Añadir evento"
+                data-testid={`planner-day-add-${i}`}
+                onClick={(e) => openDialog(d, e)}
+                className="planner-day-add"
+              >
+                <Plus size={12} weight="bold" />
+              </span>
+              <div className="planner-day-head">
+                <span className="planner-day-dow">{DAY_LABELS[i]}</span>
+                <span className="planner-day-num">{d.getDate()}</span>
               </div>
-            </button>
+              {evs.length === 0 ? (
+                <div className="planner-day-empty">Libre</div>
+              ) : (
+                <div className="space-y-1 flex-1 overflow-hidden">
+                  {evs.slice(0, 3).map((ev, j) => (
+                    <div
+                      key={`${ev.kind}-${ev.id}`}
+                      onClick={(e) => { e.stopPropagation(); navigate(ev.kind === "match" ? `/matches/${ev.id}` : "/schedule"); }}
+                      className={`planner-event ${ev.kind}`}
+                      title={`${fmtTime(ev.date)} ${ev.title}`}
+                    >
+                      <span className={`event-dot ${ev.kind}`} />
+                      <span className="truncate">
+                        <span className="opacity-70 mr-1">{fmtTime(ev.date)}</span>{ev.title}
+                      </span>
+                    </div>
+                  ))}
+                  {evs.length > 3 && (
+                    <div className="text-[10px] font-bold text-slate-500 text-center pt-0.5">+{evs.length - 3} más</div>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
 
-      {selected && (
-        <div className="mt-4 pt-4 border-t border-white/50">
-          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-            <div className="font-semibold text-sm">
-              {selected.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
-            </div>
-            <Button data-testid="planner-add-training" size="sm" onClick={() => setCreating(true)} className="bg-orange-600 hover:bg-orange-700 gap-1.5">
-              <Plus size={14} weight="bold" /> Añadir entrenamiento
-            </Button>
-          </div>
-          {selectedEvents.length === 0 ? (
-            <p className="text-slate-500 text-sm py-2">Sin eventos este día.</p>
-          ) : (
-            <div className="space-y-2">
-              {selectedEvents.map((ev) => (
-                <div
-                  key={`${ev.kind}-${ev.id}`}
-                  className="flex items-center gap-3 p-3 glass-soft rounded-xl cursor-pointer"
-                  onClick={() => navigate(ev.kind === "match" ? `/matches/${ev.id}` : "/schedule")}
-                  data-testid={`planner-event-${ev.id}`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${ev.kind === "match" ? "bg-orange-100 text-orange-700" : "bg-blue-50 text-blue-700"}`}>
-                    {ev.kind === "match" ? <Volleyball size={18} weight="duotone" /> : <CalendarBlank size={18} weight="duotone" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{ev.title}</div>
-                    <div className="text-xs text-slate-500">
-                      {new Date(ev.date).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-                      {ev.location ? ` • ${ev.location}` : ""}
-                    </div>
-                  </div>
-                  <div className="text-[10px] uppercase font-bold tracking-widest text-slate-500">
-                    {ev.kind === "match" ? "Partido" : "Entreno"}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      <Dialog open={creating} onOpenChange={setCreating}>
+      <Dialog open={!!dialog} onOpenChange={(o) => !o && setDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Nuevo entrenamiento — {selected?.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}</DialogTitle>
+            <DialogTitle>
+              Añadir evento — {dialog?.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={createTraining} className="space-y-3">
-            <div><Label>Título</Label><Input data-testid="planner-training-title" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Hora</Label><Input data-testid="planner-training-time" type="time" required value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></div>
-              <div><Label>Lugar</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
+          <form onSubmit={submitEvent} className="space-y-3">
+            <div>
+              <Label>Tipo</Label>
+              <Select value={form.kind} onValueChange={(v) => setForm({ ...form, kind: v })}>
+                <SelectTrigger data-testid="event-kind-select"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="training">Entrenamiento</SelectItem>
+                  <SelectItem value="match">Partido</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button type="submit" data-testid="planner-training-submit" className="bg-orange-600 hover:bg-orange-700">Crear entrenamiento</Button>
+            {form.kind === "training" ? (
+              <div>
+                <Label>Título</Label>
+                <Input data-testid="event-title-input" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <Label>Rival</Label>
+                  <Input data-testid="event-opponent-input" required value={form.opponent} onChange={(e) => setForm({ ...form, opponent: e.target.value })} />
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" checked={form.home} onChange={() => setForm({ ...form, home: true })} /> Local</label>
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" checked={!form.home} onChange={() => setForm({ ...form, home: false })} /> Visitante</label>
+                </div>
+              </>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Hora</Label>
+                <Input data-testid="event-time-input" type="time" required value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
+              </div>
+              <div>
+                <Label>Lugar</Label>
+                <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              </div>
+            </div>
+            <Button type="submit" data-testid="event-submit-btn" className="bg-orange-600 hover:bg-orange-700">
+              {form.kind === "training" ? "Crear entrenamiento" : "Crear partido"}
+            </Button>
           </form>
         </DialogContent>
       </Dialog>
@@ -216,7 +273,6 @@ function WeeklyPlanner({ teamId, matches, trainings, onChanged }) {
   );
 }
 
-// ------ Dashboard ------
 export default function Dashboard() {
   const { activeTeam } = useTeam() || {};
   const navigate = useNavigate();
@@ -262,10 +318,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-7xl">
-      {/* Weekly Planner — at the very top */}
       <WeeklyPlanner teamId={activeTeam.team_id} matches={matches} trainings={trainings} onChanged={reload} />
 
-      {/* Hero */}
       <Card className="zentia-card overflow-hidden relative">
         <div className="p-8 grid md:grid-cols-3 gap-6 items-center"
           style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,237,213,0.65) 100%)" }}>
@@ -306,7 +360,6 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      {/* Stats - all clickable */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard testId="dash-stat-players" label="Jugadores" value={counts.players} icon={UsersThree} onClick={() => navigate("/roster")} />
         <StatCard testId="dash-stat-scheduled" label="Próximos partidos" value={counts.scheduled} icon={CalendarBlank} accent="blue" onClick={() => navigate("/schedule")} />
@@ -314,7 +367,6 @@ export default function Dashboard() {
         <StatCard testId="dash-stat-won" label="Victorias" value={counts.won} icon={Trophy} accent="blue" onClick={() => navigate("/results")} />
       </div>
 
-      {/* Recent + News */}
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="zentia-card p-5 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
@@ -377,7 +429,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Quick actions row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Button data-testid="quick-lineup" onClick={() => navigate("/lineup")} variant="outline" className="glass-soft border-white/60 h-14 gap-2">
           <Strategy size={20} weight="duotone" className="text-orange-600" /> Alineación
@@ -388,8 +439,8 @@ export default function Dashboard() {
         <Button data-testid="quick-comms" onClick={() => navigate("/communications")} variant="outline" className="glass-soft border-white/60 h-14 gap-2">
           <Megaphone size={20} weight="duotone" className="text-orange-600" /> Comunicación
         </Button>
-        <Button data-testid="quick-attendance" onClick={() => navigate("/attendance")} variant="outline" className="glass-soft border-white/60 h-14 gap-2">
-          <UsersThree size={20} weight="duotone" className="text-blue-700" /> Asistencia
+        <Button data-testid="quick-summaries" onClick={() => navigate("/summaries")} variant="outline" className="glass-soft border-white/60 h-14 gap-2">
+          <ChartBar size={20} weight="duotone" className="text-blue-700" /> Resúmenes data
         </Button>
       </div>
     </div>

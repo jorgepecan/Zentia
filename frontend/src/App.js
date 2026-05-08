@@ -22,6 +22,7 @@ import Attendance from "./pages/Attendance";
 import Gallery from "./pages/Gallery";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import Summaries from "./pages/Summaries";
 
 const Protected = ({ children }) => {
   const { user, loading } = useAuth();
@@ -56,6 +57,7 @@ function Router() {
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/summaries" element={<Summaries />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

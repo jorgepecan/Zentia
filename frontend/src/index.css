@@ -160,75 +160,72 @@ h1, h2, h3, h4, h5, h6, .heading {
 }
 
 /* ============================================================
-   VOLLEYBALL HALF COURT (FIVB-style, 9m x 9m + service zone)
+   VOLLEYBALL HALF COURT — vibrant blue with white lines, high contrast
    ============================================================ */
 .half-court-wrap {
     position: relative;
     width: 100%;
-    max-width: 520px;
+    max-width: 540px;
     margin: 0 auto;
 }
 
 .vp-half-court {
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1.15;  /* 9m playable + ~1m service zone */
+    aspect-ratio: 1 / 1.15;
     background:
         linear-gradient(180deg,
-            rgba(255, 255, 255, 0.55) 0 5%,
-            rgba(234, 88, 12, 0.18) 5% 7%,
-            rgba(255, 255, 255, 0.62) 7% 41%,
-            rgba(234, 88, 12, 0.10) 41% 43%,
-            rgba(255, 255, 255, 0.62) 43% 87%,
-            rgba(234, 88, 12, 0.18) 87% 89%,
-            rgba(255, 255, 255, 0.40) 89% 100%);
+            #2563EB 0 4%,
+            #1E40AF 4% 6%,
+            #1E3A8A 6% 42%,
+            #1D3678 42% 44%,
+            #1E3A8A 44% 86%,
+            #1D3678 86% 88%,
+            #172A66 88% 100%);
     border-radius: 18px;
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.55);
     box-shadow:
-        inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
-        0 8px 32px -8px rgba(30, 58, 138, 0.18);
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.35),
+        inset 0 0 80px rgba(0, 0, 0, 0.35),
+        0 12px 40px -12px rgba(30, 58, 138, 0.55),
+        0 4px 16px -4px rgba(15, 23, 42, 0.20);
 }
 
 .vp-half-court::before {
-    /* hardwood texture */
     content: "";
     position: absolute; inset: 0;
     background:
-        repeating-linear-gradient(90deg, rgba(15, 23, 42, 0.02) 0 1px, transparent 1px 14px),
-        repeating-linear-gradient(0deg, rgba(15, 23, 42, 0.025) 0 1px, transparent 1px 36px);
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 16px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 40px);
     pointer-events: none;
 }
 
-/* The lines drawn over the court */
-.vp-half-court .line { position: absolute; background: rgba(255, 255, 255, 0.95); pointer-events: none; }
-/* Net (top edge) */
-.vp-half-court .line-net { top: 4%; left: 2%; right: 2%; height: 4px; border-radius: 4px;
-    background-image: repeating-linear-gradient(90deg, white 0 8px, rgba(255,255,255,0.4) 8px 12px); }
-/* Attack line at 3m (35% from net) */
-.vp-half-court .line-attack { top: 42%; left: 6%; right: 6%; height: 2px; }
-/* End line at 9m (87%) */
-.vp-half-court .line-end { top: 88%; left: 6%; right: 6%; height: 2px; }
-/* Side lines */
-.vp-half-court .line-left { top: 5%; bottom: 11%; left: 6%; width: 2px; }
-.vp-half-court .line-right { top: 5%; bottom: 11%; right: 6%; width: 2px; }
-/* Center axis (light) */
-.vp-half-court .line-axis { top: 5%; bottom: 11%; left: 50%; width: 1px; background: rgba(255,255,255,0.35); }
+.vp-half-court .line { position: absolute; background: rgba(255, 255, 255, 0.95); pointer-events: none; box-shadow: 0 0 6px rgba(255,255,255,0.35); }
+.vp-half-court .line-net { top: 4%; left: 2%; right: 2%; height: 5px; border-radius: 3px;
+    background: repeating-linear-gradient(90deg, #FB923C 0 8px, #FFFFFF 8px 16px);
+    box-shadow: 0 0 14px rgba(251, 146, 60, 0.6); }
+.vp-half-court .line-attack { top: 43%; left: 6%; right: 6%; height: 3px; }
+.vp-half-court .line-end { top: 87%; left: 6%; right: 6%; height: 3px; }
+.vp-half-court .line-left { top: 5%; bottom: 13%; left: 6%; width: 3px; }
+.vp-half-court .line-right { top: 5%; bottom: 13%; right: 6%; width: 3px; }
+.vp-half-court .line-axis { top: 5%; bottom: 13%; left: 50%; width: 1px; background: rgba(255,255,255,0.18); box-shadow: none; }
 
 .vp-half-court .court-label {
     position: absolute;
     font-family: 'Outfit', sans-serif;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 0.65rem;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: rgba(15, 23, 42, 0.45);
+    color: rgba(255, 255, 255, 0.7);
     pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
 }
-.vp-half-court .label-net { top: 1%; left: 50%; transform: translateX(-50%); color: rgba(234, 88, 12, 0.85); }
-.vp-half-court .label-attack { top: 23%; right: 8%; }
+.vp-half-court .label-net { top: 1%; left: 50%; transform: translateX(-50%); color: #FB923C; }
+.vp-half-court .label-attack { top: 24%; right: 8%; }
 .vp-half-court .label-back { top: 65%; right: 8%; }
-.vp-half-court .label-service { bottom: 4%; left: 50%; transform: translateX(-50%); }
+.vp-half-court .label-service { bottom: 5%; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.6); }
 
 .vp-spot {
     position: absolute;
@@ -239,23 +236,23 @@ h1, h2, h3, h4, h5, h6, .heading {
     font-weight: 800;
     font-size: 1.5rem;
     color: white;
-    background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+    background: linear-gradient(135deg, #FB923C 0%, #EA580C 100%);
     border: 3px solid rgba(255, 255, 255, 0.95);
     transform: translate(-50%, -50%);
     cursor: grab;
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.6),
-        0 6px 20px -4px rgba(234, 88, 12, 0.55),
-        0 2px 6px rgba(0, 0, 0, 0.18);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+        0 6px 20px -4px rgba(234, 88, 12, 0.7),
+        0 2px 6px rgba(0, 0, 0, 0.30);
+    transition: transform 0.25s ease, top 0.45s ease, left 0.45s ease, box-shadow 0.2s ease;
     user-select: none;
 }
 .vp-spot:hover { transform: translate(-50%, -50%) scale(1.06); }
 .vp-spot.empty {
-    background: rgba(255, 255, 255, 0.55);
-    color: rgba(15, 23, 42, 0.45);
-    border: 2px dashed rgba(15, 23, 42, 0.25);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.85);
+    border: 2px dashed rgba(255, 255, 255, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
     font-size: 0.78rem;
     letter-spacing: 0.05em;
 }
@@ -361,36 +358,107 @@ h1, h2, h3, h4, h5, h6, .heading {
 
 /* Weekly Planner */
 .planner-day {
-    border-radius: 14px;
-    padding: 0.75rem 0.5rem;
+    border-radius: 16px;
+    padding: 0.85rem 0.75rem 0.7rem;
     background: rgba(255, 255, 255, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(16px);
-    text-align: center;
+    text-align: left;
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-    min-height: 96px;
+    min-height: 150px;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.5rem;
+    position: relative;
 }
 .planner-day:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 0.78); }
 .planner-day.is-today {
     background: linear-gradient(160deg, rgba(255, 237, 213, 0.95) 0%, rgba(255, 255, 255, 0.7) 100%);
     border-color: rgba(234, 88, 12, 0.35);
-    color: #C2410C;
 }
+.planner-day.is-today .planner-day-num { color: #C2410C; }
 .planner-day.is-selected {
     border-color: #EA580C;
-    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25), inset 0 1px 0 rgba(255,255,255,0.7);
+    box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.30), inset 0 1px 0 rgba(255,255,255,0.7);
 }
+
+.planner-day-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding-bottom: 4px;
+}
+.planner-day-dow { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.18em; color: #64748B; text-transform: uppercase; }
+.planner-day-num { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.4rem; line-height: 1; color: #0F172A; }
+
+.planner-event {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-size: 0.72rem;
+    padding: 3px 6px;
+    border-radius: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.25;
+    border: 1px solid transparent;
+}
+.planner-event.match {
+    background: rgba(234, 88, 12, 0.12);
+    color: #9A3412;
+    border-color: rgba(234, 88, 12, 0.28);
+    font-weight: 700;
+}
+.planner-event.training {
+    background: rgba(30, 58, 138, 0.10);
+    color: #1E3A8A;
+    border-color: rgba(30, 58, 138, 0.22);
+    font-weight: 600;
+}
+
+.planner-day-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #94A3B8;
+    border: 1px dashed rgba(15, 23, 42, 0.12);
+    border-radius: 10px;
+    padding: 0.5rem;
+    margin-top: 2px;
+}
+
+.planner-day-add {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(234, 88, 12, 0.12);
+    color: #C2410C;
+    border: 1px solid rgba(234, 88, 12, 0.28);
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.planner-day:hover .planner-day-add,
+.planner-day.is-selected .planner-day-add {
+    opacity: 1;
+}
+.planner-day-add:hover { background: rgba(234, 88, 12, 0.22); transform: scale(1.05); }
 
 .event-dot {
     width: 7px; height: 7px;
     border-radius: 50%;
     display: inline-block;
-    margin-right: 3px;
+    flex-shrink: 0;
 }
 .event-dot.match { background: #EA580C; }
 .event-dot.training { background: #1E3A8A; }
